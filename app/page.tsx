@@ -16,7 +16,7 @@ export default function Home() {
   const addFiles = useCallback(
     (files: FileList | File[]) => {
       const added = Array.from(files)
-        .filter((f) => f.type.startsWith("image/"))
+        .filter((f) => f.type === "" || f.type.startsWith("image/"))
         .slice(0, 6 - photos.length)
         .map((file) => ({ file, preview: URL.createObjectURL(file) }));
       setPhotos((prev) => [...prev, ...added].slice(0, 6));
@@ -118,16 +118,6 @@ export default function Home() {
 
       <main className="flex-1 px-4 pt-5 pb-32 space-y-5 max-w-xl mx-auto w-full">
 
-        {/* sr-only instead of hidden — display:none breaks onChange on iOS Safari */}
-        <input
-          id="photo-input"
-          type="file"
-          accept="image/*"
-          multiple
-          className="sr-only"
-          onChange={(e) => e.target.files && addFiles(e.target.files)}
-        />
-
         {/* Photo zone */}
         {photos.length === 0 ? (
           <div className="rounded-3xl bg-white border-2 border-dashed border-stone-200 p-8 flex flex-col items-center gap-5 text-center">
@@ -140,11 +130,16 @@ export default function Home() {
                 Snap your fridge, pantry, or counter — Claude will figure out what you have.
               </p>
             </div>
-            <label
-              htmlFor="photo-input"
-              className="w-full py-3.5 bg-green-500 text-white rounded-2xl font-semibold text-sm active:scale-95 transition-transform text-center cursor-pointer"
-            >
+            {/* Input nested inside label — most reliable trigger on iOS Safari */}
+            <label className="relative w-full py-3.5 bg-green-500 text-white rounded-2xl font-semibold text-sm text-center cursor-pointer active:scale-95 transition-transform overflow-hidden">
               📷 Add Photos
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                onChange={(e) => e.target.files && addFiles(e.target.files)}
+              />
             </label>
           </div>
         ) : (
@@ -166,12 +161,16 @@ export default function Home() {
                 </div>
               ))}
               {photos.length < 6 && (
-                <label
-                  htmlFor="photo-input"
-                  className="flex-none w-28 h-28 rounded-2xl border-2 border-dashed border-stone-200 flex flex-col items-center justify-center gap-1 text-stone-400 active:scale-95 transition-transform cursor-pointer"
-                >
+                <label className="relative flex-none w-28 h-28 rounded-2xl border-2 border-dashed border-stone-200 flex flex-col items-center justify-center gap-1 text-stone-400 cursor-pointer overflow-hidden">
                   <span className="text-2xl">📷</span>
                   <span className="text-xs">Add more</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                    onChange={(e) => e.target.files && addFiles(e.target.files)}
+                  />
                 </label>
               )}
             </div>
