@@ -1,8 +1,13 @@
 import type { Metadata, Viewport } from "next";
-import { Geist } from "next/font/google";
+import { Geist, Newsreader } from "next/font/google";
 import "./globals.css";
 
-const geist = Geist({ subsets: ["latin"] });
+const geist = Geist({ subsets: ["latin"], variable: "--font-geist" });
+const newsreader = Newsreader({
+  subsets: ["latin"],
+  style: ["normal", "italic"],
+  variable: "--font-newsreader",
+});
 
 export const metadata: Metadata = {
   title: "Mise",
@@ -18,7 +23,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className="h-full">
-      <body className={`${geist.className} min-h-full bg-white text-black antialiased`}>
+      <body className={`${geist.variable} ${newsreader.variable} min-h-full bg-white antialiased`}>
         {children}
       </body>
     </html>

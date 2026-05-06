@@ -126,11 +126,11 @@ export default function Home() {
   // ─── Render ──────────────────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen flex flex-col bg-white text-black">
+    <div className="min-h-screen flex flex-col bg-white text-ink">
 
       {/* ── Header ── */}
-      <header className="sticky top-0 z-10 bg-white border-b border-black px-4 py-3 flex items-center">
-        <p className="text-xs font-bold tracking-widest uppercase">Mise</p>
+      <header className="sticky top-0 z-10 bg-white border-b border-ink px-4 py-3 flex items-center">
+        <p className="font-sans text-xs font-bold tracking-widest uppercase">Mise</p>
       </header>
 
       <main className="flex-1 px-4 pt-8 pb-32 space-y-8 max-w-xl mx-auto w-full">
@@ -140,8 +140,8 @@ export default function Home() {
             With photos: horizontal scrolling strip + "add more" tile */}
         {photos.length === 0 ? (
           <div>
-            <p className="text-base font-medium">What&apos;s in your larder?</p>
-            <p className="text-sm text-stone-500 mt-1">
+            <p className="font-serif text-lg font-medium italic">What&apos;s in your larder?</p>
+            <p className="font-sans text-sm text-stone-500 mt-1">
               Photograph what you have. Mise will find what you can cook.
             </p>
           </div>
@@ -154,14 +154,14 @@ export default function Home() {
                   <img src={p.preview} alt="" className="w-full h-full object-cover" />
                   <button
                     onClick={() => removePhoto(i)}
-                    className="absolute top-1 right-1 w-5 h-5 bg-white border border-black text-black text-xs flex items-center justify-center leading-none"
+                    className="absolute top-1 right-1 w-5 h-5 bg-white border border-ink text-ink text-xs flex items-center justify-center leading-none"
                   >
                     ×
                   </button>
                 </div>
               ))}
               {photos.length < 6 && (
-                <label className="relative flex-none w-24 h-24 border border-stone-300 flex flex-col items-center justify-center text-stone-400 cursor-pointer hover:border-black hover:text-black transition-colors overflow-hidden">
+                <label className="relative flex-none w-24 h-24 border border-stone-300 flex flex-col items-center justify-center text-stone-400 cursor-pointer hover:border-ink hover:text-ink transition-colors overflow-hidden">
                   <span className="text-xs">+ Add</span>
                   <input
                     type="file"
@@ -199,11 +199,11 @@ export default function Home() {
         {ingredients.length > 0 && (
           <div className="space-y-4 border-t border-stone-200 pt-6">
             <div className="flex items-center justify-between">
-              <p className="text-xs uppercase tracking-widest text-stone-400">
+              <p className="font-sans text-xs uppercase tracking-widest text-stone-400">
                 On hand <span className="font-mono">{ingredients.length}</span>
               </p>
               {status === "done" && (
-                <button onClick={refetchRecipes} className="text-xs underline underline-offset-2 text-stone-500 hover:text-black">
+                <button onClick={refetchRecipes} className="font-sans text-xs underline underline-offset-2 text-stone-500 hover:text-ink">
                   Refresh
                 </button>
               )}
@@ -211,9 +211,9 @@ export default function Home() {
 
             <div className="flex flex-wrap gap-2">
               {ingredients.map((ing, i) => (
-                <span key={i} className="inline-flex items-center gap-1 px-2 py-1 border border-stone-300 text-sm">
+                <span key={i} className="font-sans inline-flex items-center gap-1 px-2 py-1 border border-stone-300 text-sm">
                   {ing}
-                  <button onClick={() => removeIngredient(i)} className="text-stone-400 hover:text-black leading-none">×</button>
+                  <button onClick={() => removeIngredient(i)} className="text-stone-400 hover:text-ink leading-none">×</button>
                 </span>
               ))}
             </div>
@@ -223,9 +223,9 @@ export default function Home() {
                 value={newIngredient}
                 onChange={(e) => setNewIngredient(e.target.value)}
                 placeholder="Add ingredient"
-                className="flex-1 px-3 py-2 border border-stone-300 text-sm focus:outline-none focus:border-black"
+                className="font-sans flex-1 px-3 py-2 border border-stone-300 text-sm focus:outline-none focus:border-ink"
               />
-              <button type="submit" className="px-4 py-2 border border-stone-300 text-sm hover:border-black transition-colors">
+              <button type="submit" className="font-sans px-4 py-2 border border-stone-300 text-sm hover:border-ink transition-colors">
                 Add
               </button>
             </form>
@@ -252,7 +252,7 @@ export default function Home() {
             Shows how many ingredients you already have vs. still need. */}
         {recipes.length > 0 && (
           <div className="border-t border-stone-200 pt-6">
-            <p className="text-xs uppercase tracking-widest text-stone-400 mb-4">Possible dishes</p>
+            <p className="font-sans text-xs uppercase tracking-widest text-stone-400 mb-4">Possible dishes</p>
             {recipes.map((recipe) => (
               <a
                 key={recipe.id}
@@ -263,11 +263,11 @@ export default function Home() {
               >
                 {recipe.image && (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={recipe.image} alt={recipe.title} className="w-8 h-8 object-cover flex-none" />
+                  <img src={recipe.image} alt={recipe.title} className="w-16 h-16 object-cover flex-none" />
                 )}
                 <div className="flex-1 min-w-0 flex flex-col justify-center gap-1">
-                  <p className="text-sm font-medium leading-snug line-clamp-2">{recipe.title}</p>
-                  <p className="text-xs text-stone-400 font-mono">
+                  <p className="font-serif text-base leading-snug line-clamp-2">{recipe.title}</p>
+                  <p className="font-sans text-xs text-stone-400 font-mono">
                     {recipe.usedIngredientCount} have · {recipe.missedIngredientCount} needed
                   </p>
                 </div>
@@ -282,19 +282,17 @@ export default function Home() {
             Nothing found. Edit your larder above.
           </p>
         )}
-
-        <p className="text-xs text-stone-300 font-mono text-center">Claude + Spoonacular</p>
       </main>
 
       {/* ── Primary action bar ──
           Always fixed at the bottom. Shows Add Photos or Scan depending on state. */}
       <div
-        className="fixed bottom-0 inset-x-0 px-4 pt-3 bg-white border-t border-black"
+        className="fixed bottom-0 inset-x-0 px-4 pt-3 bg-white border-t border-ink"
         style={{ paddingBottom: "calc(1rem + env(safe-area-inset-bottom))" }}
       >
         <div className="max-w-xl mx-auto">
           {photos.length === 0 ? (
-            <label className="relative block w-full py-3.5 bg-black text-white text-sm font-medium tracking-wide text-center cursor-pointer overflow-hidden">
+            <label className="relative block w-full py-3.5 bg-ink text-white font-sans text-sm font-medium tracking-wide text-center cursor-pointer overflow-hidden">
               Add Photos
               <input
                 type="file"
@@ -308,7 +306,7 @@ export default function Home() {
             <button
               onClick={scan}
               disabled={isScanning}
-              className="w-full py-3.5 bg-black disabled:bg-stone-200 disabled:text-stone-400 text-white text-sm font-medium tracking-wide transition-colors"
+              className="w-full py-3.5 bg-ink disabled:bg-stone-200 disabled:text-stone-400 text-white font-sans text-sm font-medium tracking-wide transition-colors"
             >
               {status === "detecting"
                 ? "Taking stock…"
@@ -319,7 +317,9 @@ export default function Home() {
           )}
         </div>
       </div>
+      {/* built with Claude and Claude + Spoonacular */}
 
     </div>
   );
 }
+
