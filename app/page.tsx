@@ -140,9 +140,9 @@ export default function Home() {
             With photos: horizontal scrolling strip + "add more" tile */}
         {photos.length === 0 ? (
           <div>
-            <p className="text-base font-medium">What&apos;s in your fridge?</p>
+            <p className="text-base font-medium">What&apos;s in your larder?</p>
             <p className="text-sm text-stone-500 mt-1">
-              Photograph your fridge, pantry, or counter. Mise identifies ingredients and finds recipes.
+              Photograph what you have. Mise will find what you can cook.
             </p>
           </div>
         ) : (
@@ -200,11 +200,11 @@ export default function Home() {
           <div className="space-y-4 border-t border-stone-200 pt-6">
             <div className="flex items-center justify-between">
               <p className="text-xs uppercase tracking-widest text-stone-400">
-                Ingredients <span className="font-mono">{ingredients.length}</span>
+                On hand <span className="font-mono">{ingredients.length}</span>
               </p>
               {status === "done" && (
                 <button onClick={refetchRecipes} className="text-xs underline underline-offset-2 text-stone-500 hover:text-black">
-                  Re-scan
+                  Refresh
                 </button>
               )}
             </div>
@@ -252,7 +252,7 @@ export default function Home() {
             Shows how many ingredients you already have vs. still need. */}
         {recipes.length > 0 && (
           <div className="border-t border-stone-200 pt-6">
-            <p className="text-xs uppercase tracking-widest text-stone-400 mb-4">Recipes</p>
+            <p className="text-xs uppercase tracking-widest text-stone-400 mb-4">Possible dishes</p>
             {recipes.map((recipe) => (
               <a
                 key={recipe.id}
@@ -279,7 +279,7 @@ export default function Home() {
 
         {status === "done" && recipes.length === 0 && (
           <p className="text-sm text-stone-400 py-8 text-center">
-            No recipes found. Try editing the ingredients above.
+            Nothing found. Edit your larder above.
           </p>
         )}
 
@@ -311,10 +311,10 @@ export default function Home() {
               className="w-full py-3.5 bg-black disabled:bg-stone-200 disabled:text-stone-400 text-white text-sm font-medium tracking-wide transition-colors"
             >
               {status === "detecting"
-                ? "Scanning…"
+                ? "Taking stock…"
                 : status === "fetching"
-                ? "Finding recipes…"
-                : "Scan"}
+                ? "Building your menu…"
+                : "Take stock"}
             </button>
           )}
         </div>
