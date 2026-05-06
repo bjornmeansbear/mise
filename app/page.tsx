@@ -53,7 +53,10 @@ export default function Home() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ images }),
       });
-      if (!detectRes.ok) throw new Error("Failed to detect ingredients");
+      if (!detectRes.ok) {
+        const { error } = await detectRes.json().catch(() => ({ error: "Failed to detect ingredients" }));
+        throw new Error(error ?? "Failed to detect ingredients");
+      }
       const { ingredients: detected } = await detectRes.json();
       setIngredients(detected);
 
@@ -63,7 +66,10 @@ export default function Home() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ingredients: detected }),
       });
-      if (!recipesRes.ok) throw new Error("Failed to fetch recipes");
+      if (!recipesRes.ok) {
+        const { error } = await recipesRes.json().catch(() => ({ error: "Failed to fetch recipes" }));
+        throw new Error(error ?? "Failed to fetch recipes");
+      }
       const { recipes: fetched } = await recipesRes.json();
       setRecipes(fetched);
       setStatus("done");
@@ -109,10 +115,8 @@ export default function Home() {
     <div className="min-h-screen flex flex-col">
       {/* Header */}
       <header className="sticky top-0 z-10 bg-stone-50/90 backdrop-blur-sm border-b border-stone-100 px-4 py-3 flex items-center gap-3">
-        <span className="text-2xl leading-none">🧑‍🍳</span>
         <div className="leading-tight">
-          <p className="font-bold text-base">FridgeChef</p>
-          <p className="text-xs text-stone-400">Snap your fridge · get recipes</p>
+          <p className="font-bold text-base">MISE</p>
         </div>
       </header>
 

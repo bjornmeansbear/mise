@@ -11,6 +11,8 @@ export interface SpoonacularRecipe {
   likes: number;
 }
 
+export const maxDuration = 30;
+
 export async function POST(req: NextRequest) {
   const { ingredients }: { ingredients: string[] } = await req.json();
 
