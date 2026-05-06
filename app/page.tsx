@@ -5,6 +5,12 @@ import type { SpoonacularRecipe } from "./api/recipes/route";
 
 type Status = "idle" | "detecting" | "fetching" | "done" | "error";
 
+// ─── State ────────────────────────────────────────────────────────────────────
+// photos    : images the user has added (up to 6)
+// status    : drives loading states and which sections are visible
+// ingredients: detected by Claude, editable before fetching recipes
+// recipes   : returned by Spoonacular based on ingredients
+
 export default function Home() {
   const [photos, setPhotos] = useState<{ file: File; preview: string }[]>([]);
   const [status, setStatus] = useState<Status>("idle");
@@ -12,6 +18,8 @@ export default function Home() {
   const [newIngredient, setNewIngredient] = useState("");
   const [recipes, setRecipes] = useState<SpoonacularRecipe[]>([]);
   const [error, setError] = useState("");
+
+  // ─── Photo handlers ──────────────────────────────────────────────────────────
 
   const addFiles = useCallback(
     (files: FileList | File[]) => {
@@ -38,6 +46,8 @@ export default function Home() {
       reader.onerror = reject;
       reader.readAsDataURL(file);
     });
+
+  // ─── Scan: detect ingredients → fetch recipes ────────────────────────────────
 
   const scan = async () => {
     if (photos.length === 0) return;
@@ -79,6 +89,8 @@ export default function Home() {
     }
   };
 
+  // ─── Ingredient handlers ─────────────────────────────────────────────────────
+
   const removeIngredient = (i: number) =>
     setIngredients((prev) => prev.filter((_, idx) => idx !== i));
 
@@ -111,9 +123,12 @@ export default function Home() {
 
   const isScanning = status === "detecting" || status === "fetching";
 
+  // ─── Render ──────────────────────────────────────────────────────────────────
+
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Header */}
+
+      {/* ── Header ── */}
       <header className="sticky top-0 z-10 bg-stone-50/90 backdrop-blur-sm border-b border-stone-100 px-4 py-3 flex items-center gap-3">
         <div className="leading-tight">
           <p className="font-bold text-base">MISE</p>
@@ -122,19 +137,21 @@ export default function Home() {
 
       <main className="flex-1 px-4 pt-5 pb-32 space-y-5 max-w-xl mx-auto w-full">
 
-        {/* Photo zone */}
+        {/* ── Photo zone ──
+            Empty state: big prompt + upload button
+            With photos: horizontal scrolling strip + "add more" tile */}
         {photos.length === 0 ? (
-          <div className="rounded-3xl bg-white border-2 border-dashed border-stone-200 p-8 flex flex-col items-center gap-5 text-center">
+          <div className="p-8 flex flex-col items-center gap-5 text-center">
             <div className="w-20 h-20 rounded-full bg-green-50 flex items-center justify-center text-4xl">
               📸
             </div>
             <div>
               <p className="font-semibold text-stone-800 text-lg">What&apos;s in your fridge?</p>
               <p className="text-sm text-stone-400 mt-1">
-                Snap your fridge, pantry, or counter — Claude will figure out what you have.
+                Snap your fridge, pantry, or counter — Mise will figure out what you have.
               </p>
             </div>
-            {/* Input nested inside label — most reliable trigger on iOS Safari */}
+            {/* label wraps input so iOS Safari fires onChange reliably */}
             <label className="relative w-full py-3.5 bg-green-500 text-white rounded-2xl font-semibold text-sm text-center cursor-pointer active:scale-95 transition-transform overflow-hidden">
               📷 Add Photos
               <input
@@ -150,10 +167,7 @@ export default function Home() {
           <div className="space-y-2">
             <div className="flex gap-2 overflow-x-auto pb-1 photo-strip">
               {photos.map((p, i) => (
-                <div
-                  key={i}
-                  className="relative flex-none w-28 h-28 rounded-2xl overflow-hidden bg-stone-100"
-                >
+                <div key={i} className="relative flex-none w-28 h-28 rounded-2xl overflow-hidden bg-stone-100">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={p.preview} alt="" className="w-full h-full object-cover" />
                   <button
@@ -184,44 +198,36 @@ export default function Home() {
           </div>
         )}
 
-        {/* Error */}
+        {/* ── Error ── */}
         {status === "error" && (
           <div className="bg-red-50 border border-red-200 rounded-2xl p-4 text-red-700 text-sm">
             {error}
           </div>
         )}
 
-        {/* Loading skeleton */}
+        {/* ── Ingredients loading skeleton ── */}
         {isScanning && ingredients.length === 0 && (
           <div className="bg-white rounded-2xl p-4 space-y-3 border border-stone-100">
             <div className="h-4 w-32 bg-stone-100 rounded-full animate-pulse" />
             <div className="flex flex-wrap gap-2">
               {[80, 60, 100, 72, 56, 88].map((w, i) => (
-                <div
-                  key={i}
-                  className="h-8 rounded-full bg-stone-100 animate-pulse"
-                  style={{ width: w }}
-                />
+                <div key={i} className="h-8 rounded-full bg-stone-100 animate-pulse" style={{ width: w }} />
               ))}
             </div>
           </div>
         )}
 
-        {/* Ingredients */}
+        {/* ── Ingredients ──
+            Editable chip list. Remove chips or add manually before re-scanning. */}
         {ingredients.length > 0 && (
           <div className="bg-white rounded-2xl p-4 space-y-3 shadow-sm border border-stone-100">
             <div className="flex items-center justify-between">
               <h2 className="font-semibold">
                 🥦 Ingredients
-                <span className="ml-1.5 text-stone-400 font-normal text-sm">
-                  ({ingredients.length})
-                </span>
+                <span className="ml-1.5 text-stone-400 font-normal text-sm">({ingredients.length})</span>
               </h2>
               {status === "done" && (
-                <button
-                  onClick={refetchRecipes}
-                  className="text-sm text-green-600 font-medium"
-                >
+                <button onClick={refetchRecipes} className="text-sm text-green-600 font-medium">
                   Refresh →
                 </button>
               )}
@@ -229,17 +235,9 @@ export default function Home() {
 
             <div className="flex flex-wrap gap-2">
               {ingredients.map((ing, i) => (
-                <span
-                  key={i}
-                  className="inline-flex items-center gap-1 px-3 py-1.5 bg-green-50 text-green-800 rounded-full text-sm font-medium"
-                >
+                <span key={i} className="inline-flex items-center gap-1 px-3 py-1.5 bg-green-50 text-green-800 rounded-full text-sm font-medium">
                   {ing}
-                  <button
-                    onClick={() => removeIngredient(i)}
-                    className="text-green-400 leading-none text-base"
-                  >
-                    ×
-                  </button>
+                  <button onClick={() => removeIngredient(i)} className="text-green-400 leading-none text-base">×</button>
                 </span>
               ))}
             </div>
@@ -251,24 +249,18 @@ export default function Home() {
                 placeholder="Add an ingredient…"
                 className="flex-1 px-3 py-2.5 border border-stone-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-300"
               />
-              <button
-                type="submit"
-                className="px-4 py-2.5 bg-stone-100 rounded-xl text-sm font-medium active:scale-95 transition-transform"
-              >
+              <button type="submit" className="px-4 py-2.5 bg-stone-100 rounded-xl text-sm font-medium active:scale-95 transition-transform">
                 Add
               </button>
             </form>
           </div>
         )}
 
-        {/* Recipe loading skeleton */}
+        {/* ── Recipes loading skeleton ── */}
         {status === "fetching" && (
           <div className="space-y-3">
             {[1, 2, 3].map((i) => (
-              <div
-                key={i}
-                className="bg-white rounded-2xl overflow-hidden border border-stone-100 flex animate-pulse"
-              >
+              <div key={i} className="bg-white rounded-2xl overflow-hidden border border-stone-100 flex animate-pulse">
                 <div className="w-24 h-24 bg-stone-100 flex-none" />
                 <div className="py-3 px-3 flex-1 space-y-2">
                   <div className="h-4 bg-stone-100 rounded-full w-3/4" />
@@ -279,7 +271,9 @@ export default function Home() {
           </div>
         )}
 
-        {/* Recipes */}
+        {/* ── Recipes ──
+            Each card links out to the full recipe on Spoonacular.
+            Shows how many ingredients you already have vs. still need. */}
         {recipes.length > 0 && (
           <div className="space-y-3">
             <h2 className="font-semibold text-base">🍽️ Recipes you can make</h2>
@@ -293,24 +287,14 @@ export default function Home() {
               >
                 {recipe.image && (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={recipe.image}
-                    alt={recipe.title}
-                    className="w-24 h-24 object-cover flex-none"
-                  />
+                  <img src={recipe.image} alt={recipe.title} className="w-24 h-24 object-cover flex-none" />
                 )}
                 <div className="px-3 py-3 flex-1 min-w-0 flex flex-col justify-center gap-1">
-                  <h3 className="font-semibold text-sm leading-snug line-clamp-2">
-                    {recipe.title}
-                  </h3>
+                  <h3 className="font-semibold text-sm leading-snug line-clamp-2">{recipe.title}</h3>
                   <div className="flex gap-3 text-xs">
-                    <span className="text-green-600 font-medium">
-                      ✓ {recipe.usedIngredientCount} you have
-                    </span>
+                    <span className="text-green-600 font-medium">✓ {recipe.usedIngredientCount} you have</span>
                     {recipe.missedIngredientCount > 0 && (
-                      <span className="text-stone-400">
-                        +{recipe.missedIngredientCount} needed
-                      </span>
+                      <span className="text-stone-400">+{recipe.missedIngredientCount} needed</span>
                     )}
                   </div>
                   {recipe.missedIngredientCount > 0 && (
@@ -333,9 +317,13 @@ export default function Home() {
         <p className="text-center text-xs text-stone-300">Powered by Claude + Spoonacular</p>
       </main>
 
-      {/* Sticky scan button */}
+      {/* ── Sticky scan button ──
+          Only appears once photos are added. Stays fixed at the bottom. */}
       {photos.length > 0 && (
-        <div className="fixed bottom-0 inset-x-0 px-4 pt-3 bg-gradient-to-t from-stone-50 via-stone-50/95 to-transparent" style={{ paddingBottom: "calc(1.5rem + env(safe-area-inset-bottom))" }}>
+        <div
+          className="fixed bottom-0 inset-x-0 px-4 pt-3 bg-gradient-to-t from-stone-50 via-stone-50/95 to-transparent"
+          style={{ paddingBottom: "calc(1.5rem + env(safe-area-inset-bottom))" }}
+        >
           <div className="max-w-xl mx-auto">
             <button
               onClick={scan}
@@ -351,6 +339,7 @@ export default function Home() {
           </div>
         </div>
       )}
+
     </div>
   );
 }
