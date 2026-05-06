@@ -139,24 +139,11 @@ export default function Home() {
             Empty state: prompt + upload button
             With photos: horizontal scrolling strip + "add more" tile */}
         {photos.length === 0 ? (
-          <div className="space-y-6">
-            <div>
-              <p className="text-base font-medium">What&apos;s in your fridge?</p>
-              <p className="text-sm text-stone-500 mt-1">
-                Photograph your fridge, pantry, or counter. Mise identifies ingredients and finds recipes.
-              </p>
-            </div>
-            {/* label wraps input so iOS Safari fires onChange reliably */}
-            <label className="relative block w-full py-3 border border-black text-sm font-medium text-center cursor-pointer hover:bg-black hover:text-white transition-colors overflow-hidden">
-              Add Photos
-              <input
-                type="file"
-                accept="image/*"
-                multiple
-                className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
-                onChange={(e) => e.target.files && addFiles(e.target.files)}
-              />
-            </label>
+          <div>
+            <p className="text-base font-medium">What&apos;s in your fridge?</p>
+            <p className="text-sm text-stone-500 mt-1">
+              Photograph your fridge, pantry, or counter. Mise identifies ingredients and finds recipes.
+            </p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -276,7 +263,7 @@ export default function Home() {
               >
                 {recipe.image && (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={recipe.image} alt={recipe.title} className="w-16 h-16 object-cover flex-none" />
+                  <img src={recipe.image} alt={recipe.title} className="w-8 h-8 object-cover flex-none" />
                 )}
                 <div className="flex-1 min-w-0 flex flex-col justify-center gap-1">
                   <p className="text-sm font-medium leading-snug line-clamp-2">{recipe.title}</p>
@@ -299,14 +286,25 @@ export default function Home() {
         <p className="text-xs text-stone-300 font-mono text-center">Claude + Spoonacular</p>
       </main>
 
-      {/* ── Sticky scan button ──
-          Only appears once photos are added. Stays fixed at the bottom. */}
-      {photos.length > 0 && (
-        <div
-          className="fixed bottom-0 inset-x-0 px-4 pt-3 bg-white border-t border-black"
-          style={{ paddingBottom: "calc(1rem + env(safe-area-inset-bottom))" }}
-        >
-          <div className="max-w-xl mx-auto">
+      {/* ── Primary action bar ──
+          Always fixed at the bottom. Shows Add Photos or Scan depending on state. */}
+      <div
+        className="fixed bottom-0 inset-x-0 px-4 pt-3 bg-white border-t border-black"
+        style={{ paddingBottom: "calc(1rem + env(safe-area-inset-bottom))" }}
+      >
+        <div className="max-w-xl mx-auto">
+          {photos.length === 0 ? (
+            <label className="relative block w-full py-3.5 bg-black text-white text-sm font-medium tracking-wide text-center cursor-pointer overflow-hidden">
+              Add Photos
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                onChange={(e) => e.target.files && addFiles(e.target.files)}
+              />
+            </label>
+          ) : (
             <button
               onClick={scan}
               disabled={isScanning}
@@ -318,9 +316,9 @@ export default function Home() {
                 ? "Finding recipes…"
                 : "Scan"}
             </button>
-          </div>
+          )}
         </div>
-      )}
+      </div>
 
     </div>
   );
