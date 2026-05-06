@@ -129,8 +129,8 @@ export default function Home() {
     <div className="min-h-screen flex flex-col bg-white text-ink">
 
       {/* ── Header ── */}
-      <header className="sticky top-0 z-10 bg-white border-b border-ink px-4 py-3 flex items-center">
-        <p className="font-sans text-xs font-bold tracking-widest uppercase">Mise</p>
+      <header className="sticky top-0 z-10 bg-white px-4 py-2 flex items-center">
+        <p className="font-sans text-xs font-bold uppercase">Mise</p>
       </header>
 
       <main className="flex-1 px-4 pt-8 pb-32 space-y-8 max-w-xl mx-auto w-full">
@@ -140,9 +140,9 @@ export default function Home() {
             With photos: horizontal scrolling strip + "add more" tile */}
         {photos.length === 0 ? (
           <div>
-            <p className="font-serif text-lg font-medium italic">What&apos;s in your larder?</p>
-            <p className="font-sans text-sm text-stone-500 mt-1">
-              Photograph what you have. Mise will find what you can cook.
+            <p className="font-serif text-3xl font-thin italic">What&apos;s in your larder?</p>
+            <p className="font-sans text-md mt-1">
+              Photograph what you have. Mise will create a list of ingredients and prepare some options for what you can cook.
             </p>
           </div>
         ) : (
@@ -287,7 +287,7 @@ export default function Home() {
       {/* ── Primary action bar ──
           Always fixed at the bottom. Shows Add Photos or Scan depending on state. */}
       <div
-        className="fixed bottom-0 inset-x-0 px-4 pt-3 bg-white border-t border-ink"
+        className="fixed bottom-0 inset-x-0 px-4 pt-3 bg-white"
         style={{ paddingBottom: "calc(1rem + env(safe-area-inset-bottom))" }}
       >
         <div className="max-w-xl mx-auto">
