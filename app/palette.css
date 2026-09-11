@@ -34,16 +34,16 @@
   --blue-9: rgb(1,7,7);
 
   /* purple */
-  --purple-0: rgb(255,237,255); --purple-1: rgb(252,224,244); --purple-2: rgb(234,203,225);
-  --purple-3: rgb(208,175,198); --purple-4: rgb(174,140,165); --purple-5: rgb(139,103,130);
-  --purple-6: rgb(102,71,94);   --purple-7: rgb(67,41,60);    --purple-8: rgb(34,14,29);
-  --purple-9: rgb(14,2,11);
+  --purple-0: rgb(250,239,255); --purple-1: rgb(244,226,253); --purple-2: rgb(225,205,235);
+  --purple-3: rgb(199,178,209); --purple-4: rgb(165,143,175); --purple-5: rgb(130,106,141);
+  --purple-6: rgb(94,73,103);   --purple-7: rgb(60,43,68);    --purple-8: rgb(29,16,35);
+  --purple-9: rgb(11,3,15);
 
   /* pink */
-  --pink-0: rgb(255,203,232); --pink-1: rgb(255,187,218); --pink-2: rgb(255,163,197);
-  --pink-3: rgb(255,129,169); --pink-4: rgb(250,81,134);  --pink-5: rgb(214,0,97);
-  --pink-6: rgb(164,0,65);    --pink-7: rgb(116,0,37);    --pink-8: rgb(69,0,11);
-  --pink-9: rgb(40,0,1);
+  --pink-0: rgb(248,207,230); --pink-1: rgb(246,192,216); --pink-2: rgb(243,171,197);
+  --pink-3: rgb(240,141,170); --pink-4: rgb(232,103,138);  --pink-5: rgb(197,57,101);
+  --pink-6: rgb(150,41,70);    --pink-7: rgb(106,26,42);    --pink-8: rgb(62,12,16);
+  --pink-9: rgb(36,4,4);
 
   /* brown */
   --brown-0: rgb(251,245,242); --brown-1: rgb(238,232,229); --brown-2: rgb(219,212,209);
@@ -68,4 +68,24 @@
   --light-gray-3: rgb(177,192,170); --light-gray-4: rgb(142,158,135); --light-gray-5: rgb(106,122,98);
   --light-gray-6: rgb(73,88,66);    --light-gray-7: rgb(43,55,37);    --light-gray-8: rgb(16,25,11);
   --light-gray-9: rgb(3,8,1);
+  /* Added from color-system-and-guidelines/kit.css (2026-09-11): goldenrod and
+     cornflower (restored Wjerk hues), and the Wjerk white/black scales. */
+  --goldenrod-0: rgb(255,247,222); --goldenrod-1: rgb(255,234,174); --goldenrod-2: rgb(236,210,137);
+  --goldenrod-3: rgb(213,184,98); --goldenrod-4: rgb(181,149,46); --goldenrod-5: rgb(142,113,0);
+  --goldenrod-6: rgb(101,80,0); --goldenrod-7: rgb(63,49,0); --goldenrod-8: rgb(29,21,0);
+  --goldenrod-9: rgb(9,5,0);
+  --cornflower-0: rgb(243,247,255); --cornflower-1: rgb(225,236,255); --cornflower-2: rgb(190,213,255);
+  --cornflower-3: rgb(158,187,243); --cornflower-4: rgb(121,152,212); --cornflower-5: rgb(83,115,178);
+  --cornflower-6: rgb(53,81,136); --cornflower-7: rgb(26,49,94); --cornflower-8: rgb(5,19,53);
+  --cornflower-9: rgb(1,5,23);
+  --white-0: rgb(248,250,231); --white-1: rgb(245,246,222); --white-2: rgb(241,242,214);
+  --white-3: rgb(239,238,206); --white-4: rgb(236,233,199); --white-5: rgb(233,229,191);
+  --white-6: rgb(231,224,183); --white-7: rgb(229,220,175); --white-8: rgb(227,215,168);
+  --white-9: rgb(225,211,160);
+  --black-0: rgb(106,97,93); --black-1: rgb(99,90,87); --black-2: rgb(92,84,80);
+  --black-3: rgb(85,77,74); --black-4: rgb(78,71,68); --black-5: rgb(71,64,62);
+  --black-6: rgb(64,58,56); --black-7: rgb(58,52,50); --black-8: rgb(51,46,44);
+  --black-9: rgb(45,40,38);
+  --wjerk-white: var(--white-0);
+  --wjerk-black: var(--black-9);
 }
