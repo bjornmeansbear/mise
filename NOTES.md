@@ -24,8 +24,6 @@ Last updated 2026-11-06.
 
 ## To do
 
-- **Commit and push.** The live site is on Next.js 16.2.4, which has known
-  security holes. The fix (16.4.5) is in this working copy.
 - **Design** — sketch before deciding what's next. Ideas still open:
   a hard offset outline or a slight tilt on the recipe cards (both are
   card traits from other Wjerk designs); a shorter intro sentence.
@@ -39,8 +37,6 @@ Last updated 2026-11-06.
 - **Names.** The folder and package are still `fridgechef`; the GitHub repo
   and Vercel project are still `mise` (mise-ivory.vercel.app). Renaming the
   GitHub repo means updating the git remote.
-- **Global CLAUDE.md** recommends `@cloudflare/next-on-pages`, which is
-  deprecated. The current option is `@opennextjs/cloudflare`.
 - **Stray `~/package-lock.json`** (88 bytes, owned by root, from 2026-10-03).
   Next.js warns about it on every build. Safe to delete; needs `sudo`.
 - **README.md** is still the Next.js starter text.
