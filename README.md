@@ -1,3 +1,15 @@
+# Wjaffle
+
+Take a picture. Get recipes.
+
+Photograph your cupboards and fridge, and Wjaffle makes a list of the ingredients you have and suggests what you could cook with them. It's for the moment you're standing at the open fridge, waffling over what to make. (A jaffle, in Australia and New Zealand, is a toasted sandwich pressed in an iron, usually made from whatever's in the fridge.)
+
+The idea behind it is *mise en place*, everything in its place: the prep step, working out what you have before you start cooking. "Mise" was the working name.
+
+Part of the [Wjerk](https://a.wjerk.shop) family of projects. The repo is still called `fridgechef`.
+
+---
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started

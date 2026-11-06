@@ -1,8 +1,8 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Newsreader } from "next/font/google";
+import { Newsreader } from "next/font/google";
 import "./globals.css";
 
-const geist = Geist({ subsets: ["latin"], variable: "--font-geist" });
+// Display face only. Body text uses the kit's system sans stack.
 const newsreader = Newsreader({
   subsets: ["latin"],
   style: ["normal", "italic"],
@@ -10,7 +10,7 @@ const newsreader = Newsreader({
 });
 
 export const metadata: Metadata = {
-  title: "Mise",
+  title: "Wjaffle",
   description: "Take a picture. Get recipes.",
 };
 
@@ -18,14 +18,16 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#F8FAE7" },
+    { media: "(prefers-color-scheme: dark)", color: "#080504" },
+  ],
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="h-full">
-      <body className={`${geist.variable} ${newsreader.variable} min-h-full bg-white antialiased`}>
-        {children}
-      </body>
+    <html lang="en" className={`${newsreader.variable} h-full`}>
+      <body className="min-h-full">{children}</body>
     </html>
   );
 }

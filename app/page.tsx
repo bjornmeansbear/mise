@@ -124,123 +124,143 @@ export default function Home() {
   const isScanning = status === "detecting" || status === "fetching";
 
   // ─── Render ──────────────────────────────────────────────────────────────────
+  // Colors, type sizes and spacing all come from kit.css (see globals.css).
+  // Spacing is on a 6px unit: p-1 = 6px, p-4 = 24px. Kit element rules give
+  // <p> and headings a bottom margin, so text outside a space-y-* stack sets m-0.
+
+  const statusText =
+    status === "detecting"
+      ? "Taking stock…"
+      : status === "fetching"
+      ? "Building your menu…"
+      : "Take stock";
 
   return (
-    <div className="min-h-screen flex flex-col bg-white text-ink">
+    <div className="min-h-screen flex flex-col">
 
       {/* ── Header ── */}
-      <header className="sticky top-0 z-10 bg-white px-4 py-2 flex items-center">
-        <p className="font-sans text-xs font-bold uppercase">Mise</p>
+      <header className="sticky top-0 z-10 bg-bg border-b border-border px-3 py-2">
+        <p className="m-0 max-w-tablet mx-auto font-sans text-xs font-bold uppercase tracking-widest">Wjaffle</p>
       </header>
 
-      <main className="flex-1 px-4 pt-8 pb-32 space-y-8 max-w-xl mx-auto w-full">
+      <main className="flex-1 px-3 pt-6 pb-24 space-y-6 max-w-tablet mx-auto w-full">
 
         {/* ── Photo zone ──
             Empty state: prompt + upload button
             With photos: horizontal scrolling strip + "add more" tile */}
         {photos.length === 0 ? (
           <div>
-            <p className="font-serif text-3xl font-thin italic">What&apos;s in your larder?</p>
-            <p className="font-sans text-md mt-1">
-              Photograph what you have. Mise will create a list of ingredients and prepare some options for what you can cook.
+            <h1 className="m-0 font-display text-3xl font-thin italic">What&apos;s in your larder?</h1>
+            <p className="m-0 mt-1 text-md">
+              Photograph what you have. Wjaffle will create a list of ingredients and prepare some options for what you can cook.
             </p>
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-1">
             <div className="flex gap-2 overflow-x-auto pb-1 photo-strip">
               {photos.map((p, i) => (
-                <div key={i} className="relative flex-none w-24 h-24 bg-stone-100 overflow-hidden">
+                <div key={i} className="relative flex-none w-16 h-16 bg-well overflow-hidden">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={p.preview} alt="" className="w-full h-full object-cover" />
+                  <img src={p.preview} alt={`Photo ${i + 1}`} className="w-full h-full object-cover" />
                   <button
                     onClick={() => removePhoto(i)}
-                    className="absolute top-1 right-1 w-5 h-5 bg-white border border-ink text-ink text-xs flex items-center justify-center leading-none"
+                    aria-label={`Remove photo ${i + 1}`}
+                    className="absolute top-1 right-1 w-4 h-4 bg-bg border border-border text-text text-xs flex items-center justify-center leading-none active:bg-text active:text-bg"
                   >
                     ×
                   </button>
                 </div>
               ))}
               {photos.length < 6 && (
-                <label className="relative flex-none w-24 h-24 border border-stone-300 flex flex-col items-center justify-center text-stone-400 cursor-pointer hover:border-ink hover:text-ink transition-colors overflow-hidden">
+                <label className="relative flex-none w-16 h-16 border border-border flex flex-col items-center justify-center cursor-pointer overflow-hidden active:bg-text active:text-bg has-focus-visible:outline-4 has-focus-visible:outline-accent has-focus-visible:outline-offset-2">
                   <span className="text-xs">+ Add</span>
                   <input
                     type="file"
                     accept="image/*"
                     multiple
+                    aria-label="Add more photos"
                     className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
                     onChange={(e) => e.target.files && addFiles(e.target.files)}
                   />
                 </label>
               )}
             </div>
-            <p className="text-xs text-stone-400 font-mono">{photos.length}/6</p>
+            <p className="m-0 text-xs text-text-muted font-mono">{photos.length}/6</p>
           </div>
         )}
 
         {/* ── Error ── */}
         {status === "error" && (
-          <p className="text-sm text-red-700 border-l-2 border-red-700 pl-3">{error}</p>
+          <p role="alert" className="m-0 text-sm text-danger border-l-2 border-danger pl-2">{error}</p>
         )}
 
-        {/* ── Ingredients loading skeleton ── */}
+        {/* ── Ingredients loading placeholder ── */}
         {isScanning && ingredients.length === 0 && (
-          <div className="space-y-3 border-t border-stone-200 pt-6">
-            <div className="h-3 w-24 bg-stone-100 animate-pulse" />
-            <div className="flex flex-wrap gap-2">
+          <div aria-hidden="true" className="space-y-2 border-t border-border pt-4">
+            <div className="h-2 w-16 bg-well motion-safe:animate-pulse" />
+            <div className="flex flex-wrap gap-1">
               {[80, 60, 100, 72, 56, 88].map((w, i) => (
-                <div key={i} className="h-6 bg-stone-100 animate-pulse" style={{ width: w }} />
+                <div key={i} className="h-4 rounded-full bg-well motion-safe:animate-pulse" style={{ width: w }} />
               ))}
             </div>
           </div>
         )}
 
         {/* ── Ingredients ──
-            Editable tag list. Remove tags or add manually before re-scanning. */}
+            Editable pill list. Remove pills or add manually before re-scanning. */}
         {ingredients.length > 0 && (
-          <div className="space-y-4 border-t border-stone-200 pt-6">
+          <section className="space-y-3 border-t border-border pt-4">
             <div className="flex items-center justify-between">
-              <p className="font-sans text-xs uppercase tracking-widest text-stone-400">
+              <h2 className="m-0 font-sans font-normal text-xs uppercase tracking-widest text-text-muted">
                 On hand <span className="font-mono">{ingredients.length}</span>
-              </p>
+              </h2>
               {status === "done" && (
-                <button onClick={refetchRecipes} className="font-sans text-xs underline underline-offset-2 text-stone-500 hover:text-ink">
+                <button onClick={refetchRecipes} className="min-h-4 text-xs underline underline-offset-2 text-text-muted hover:text-text">
                   Refresh
                 </button>
               )}
             </div>
 
-            <div className="flex flex-wrap gap-2">
+            <ul className="m-0 p-0 list-none flex flex-wrap gap-1">
               {ingredients.map((ing, i) => (
-                <span key={i} className="font-sans inline-flex items-center gap-1 px-2 py-1 border border-stone-300 text-sm">
+                <li key={i} className="inline-flex items-center gap-0.5 pl-2 pr-0.5 border border-border rounded-full text-sm">
                   {ing}
-                  <button onClick={() => removeIngredient(i)} className="text-stone-400 hover:text-ink leading-none">×</button>
-                </span>
+                  <button
+                    onClick={() => removeIngredient(i)}
+                    aria-label={`Remove ${ing}`}
+                    className="w-4 h-4 rounded-full flex items-center justify-center leading-none text-text-muted hover:text-text active:bg-text active:text-bg"
+                  >
+                    ×
+                  </button>
+                </li>
               ))}
-            </div>
+            </ul>
 
             <form onSubmit={addIngredient} className="flex gap-2">
+              <label htmlFor="new-ingredient" className="sr-only">Add ingredient</label>
               <input
+                id="new-ingredient"
                 value={newIngredient}
                 onChange={(e) => setNewIngredient(e.target.value)}
                 placeholder="Add ingredient"
-                className="font-sans flex-1 px-3 py-2 border border-stone-300 text-sm focus:outline-none focus:border-ink"
+                className="flex-1 min-w-0 px-2 py-2 bg-bg text-text border border-border text-sm"
               />
-              <button type="submit" className="font-sans px-4 py-2 border border-stone-300 text-sm hover:border-ink transition-colors">
+              <button type="submit" className="px-4 py-2 border border-border text-sm active:bg-text active:text-bg">
                 Add
               </button>
             </form>
-          </div>
+          </section>
         )}
 
-        {/* ── Recipes loading skeleton ── */}
+        {/* ── Recipes loading placeholder ── */}
         {status === "fetching" && (
-          <div className="space-y-4 border-t border-stone-200 pt-6">
+          <div aria-hidden="true" className="space-y-3 border-t border-border pt-4">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="flex gap-3 animate-pulse">
-                <div className="w-16 h-16 bg-stone-100 flex-none" />
-                <div className="flex-1 space-y-2 py-1">
-                  <div className="h-3 bg-stone-100 w-3/4" />
-                  <div className="h-3 bg-stone-100 w-1/2" />
+              <div key={i} className="flex gap-2 motion-safe:animate-pulse">
+                <div className="w-11 h-11 bg-well flex-none" />
+                <div className="flex-1 space-y-1 py-1">
+                  <div className="h-2 bg-well w-3/4" />
+                  <div className="h-2 bg-well w-1/2" />
                 </div>
               </div>
             ))}
@@ -249,51 +269,63 @@ export default function Home() {
 
         {/* ── Recipes ──
             Each row links out to the full recipe on Spoonacular.
-            Shows how many ingredients you already have vs. still need. */}
+            Shows how many ingredients you already have vs. still need.
+            Hover underlines the title; no fill. Focus ring is inset so the
+            full-width row can't clip it. */}
         {recipes.length > 0 && (
-          <div className="border-t border-stone-200 pt-6">
-            <p className="font-sans text-xs uppercase tracking-widest text-stone-400 mb-4">Possible dishes</p>
-            {recipes.map((recipe) => (
-              <a
-                key={recipe.id}
-                href={`https://spoonacular.com/recipes/${recipe.title.toLowerCase().replace(/\s+/g, "-")}-${recipe.id}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex gap-3 border-t border-stone-200 py-3 hover:bg-stone-50 transition-colors"
-              >
-                {recipe.image && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={recipe.image} alt={recipe.title} className="w-16 h-16 object-cover flex-none" />
-                )}
-                <div className="flex-1 min-w-0 flex flex-col justify-center gap-1">
-                  <p className="font-serif text-base leading-snug line-clamp-2">{recipe.title}</p>
-                  <p className="font-sans text-xs text-stone-400 font-mono">
-                    {recipe.usedIngredientCount} have · {recipe.missedIngredientCount} needed
-                  </p>
-                </div>
-              </a>
-            ))}
-            <div className="border-t border-stone-200" />
-          </div>
+          <section className="border-t border-border pt-4">
+            <h2 className="m-0 mb-3 font-sans font-normal text-xs uppercase tracking-widest text-text-muted">Possible dishes</h2>
+            <ul className="m-0 p-0 list-none border-b border-border">
+              {recipes.map((recipe) => (
+                <li key={recipe.id} className="border-t border-border">
+                  <a
+                    href={`https://spoonacular.com/recipes/${recipe.title.toLowerCase().replace(/\s+/g, "-")}-${recipe.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group flex gap-2 py-2 text-text no-underline focus-visible:outline-offset-[-4px]"
+                  >
+                    {recipe.image && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={recipe.image} alt="" className="w-11 h-11 object-cover flex-none" />
+                    )}
+                    <div className="flex-1 min-w-0 flex flex-col justify-center gap-0.5">
+                      <p className="m-0 font-display text-md line-clamp-2 group-hover:underline underline-offset-2">{recipe.title}</p>
+                      <p className="m-0 text-xs text-text-muted font-mono">
+                        {recipe.usedIngredientCount} have · {recipe.missedIngredientCount} needed
+                      </p>
+                    </div>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </section>
         )}
 
         {status === "done" && recipes.length === 0 && (
-          <p className="text-sm text-stone-400 py-8 text-center">
+          <p className="m-0 text-sm text-text-muted py-6 text-center">
             Nothing found. Edit your larder above.
           </p>
         )}
+
+        {/* Announces scan progress to screen readers. */}
+        <p className="sr-only" aria-live="polite">
+          {isScanning ? statusText : status === "done" ? `${recipes.length} possible dishes` : ""}
+        </p>
       </main>
 
       {/* ── Primary action bar ──
-          Always fixed at the bottom. Shows Add Photos or Scan depending on state. */}
+          Fixed at the bottom with a 2px rule, never a shadow. Shows Add Photos
+          or Take stock depending on state. Pink is for this one action only.
+          While scanning it turns into a plain bordered button so the progress
+          text stays readable (the kit's faded disabled state would not be). */}
       <div
-        className="fixed bottom-0 inset-x-0 px-4 pt-3 bg-white"
-        style={{ paddingBottom: "calc(1rem + env(safe-area-inset-bottom))" }}
+        className="fixed bottom-0 inset-x-0 px-3 pt-2 bg-bg border-t-2 border-border"
+        style={{ paddingBottom: "calc(1.125rem + env(safe-area-inset-bottom))" }}
       >
-        <div className="max-w-xl mx-auto">
+        <div className="max-w-tablet mx-auto">
           {photos.length === 0 ? (
-            <label className="relative block w-full py-3.5 bg-ink text-white font-sans text-sm font-medium tracking-wide text-center cursor-pointer overflow-hidden">
-              Add Photos
+            <label className="btn btn-accent relative block w-full text-center overflow-hidden active:bg-accent-hover active:border-accent-hover has-focus-visible:outline-4 has-focus-visible:outline-accent has-focus-visible:outline-offset-2">
+              Add photos
               <input
                 type="file"
                 accept="image/*"
@@ -306,13 +338,9 @@ export default function Home() {
             <button
               onClick={scan}
               disabled={isScanning}
-              className="w-full py-3.5 bg-ink disabled:bg-stone-200 disabled:text-stone-400 text-white font-sans text-sm font-medium tracking-wide transition-colors"
+              className="btn btn-accent w-full disabled:opacity-100 disabled:bg-bg disabled:text-text disabled:border-border disabled:font-normal"
             >
-              {status === "detecting"
-                ? "Taking stock…"
-                : status === "fetching"
-                ? "Building your menu…"
-                : "Take stock"}
+              {statusText}
             </button>
           )}
         </div>
@@ -322,4 +350,3 @@ export default function Home() {
     </div>
   );
 }
-
