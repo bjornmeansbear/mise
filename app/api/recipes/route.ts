@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
   const params = new URLSearchParams({
     apiKey,
     ingredients: ingredients.join(","),
-    number: "9",
+    number: "20",
     ranking: "2", // maximize used ingredients
     ignorePantry: "true",
   });

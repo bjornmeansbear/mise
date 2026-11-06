@@ -123,6 +123,13 @@ export default function Home() {
 
   const isScanning = status === "detecting" || status === "fetching";
 
+  // "Ready" means nothing missing beyond pantry basics (salt, oil, water…),
+  // which Spoonacular skips via ignorePantry. The rest sort by fewest missing.
+  const readyRecipes = recipes.filter((r) => r.missedIngredientCount === 0);
+  const needMoreRecipes = recipes
+    .filter((r) => r.missedIngredientCount > 0)
+    .sort((a, b) => a.missedIngredientCount - b.missedIngredientCount);
+
   // ─── Render ──────────────────────────────────────────────────────────────────
   // Colors, type sizes and spacing all come from kit.css (see globals.css).
   // Spacing is on a 6px unit: p-1 = 6px, p-4 = 24px. Kit element rules give
@@ -138,25 +145,24 @@ export default function Home() {
   return (
     <div className="min-h-screen flex flex-col">
 
-      {/* ── Header ── */}
-      <header className="sticky top-0 z-10 bg-bg border-b border-border px-3 py-2">
-        <p className="m-0 max-w-tablet mx-auto font-sans text-xs font-bold uppercase tracking-widest">Wjaffle</p>
-      </header>
-
-      <main className="flex-1 px-3 pt-6 pb-24 space-y-6 max-w-tablet mx-auto w-full">
+      {/* No header. Top padding clears the notch / status bar on phones. */}
+      <main
+        className="flex-1 px-3 pb-24 space-y-6 max-w-tablet mx-auto w-full"
+        style={{ paddingTop: "calc(2.25rem + env(safe-area-inset-top))" }}
+      >
 
         {/* ── Photo zone ──
             Empty state: prompt + upload button
             With photos: horizontal scrolling strip + "add more" tile */}
         {photos.length === 0 ? (
           <div>
-            <h1 className="m-0 font-display text-3xl font-thin italic">What&apos;s in your larder?</h1>
+            <h1 className="m-0 font-display text-3xl font-thin italic">Stop waffling. Start cooking.</h1>
             <p className="m-0 mt-1 text-md">
-              Photograph what you have. Wjaffle will create a list of ingredients and prepare some options for what you can cook.
+              Create a list of recipes you can make from the photographs of your cabinet and refrigerator contents.
             </p>
           </div>
         ) : (
-          <div className="space-y-1">
+          <div>
             <div className="flex gap-2 overflow-x-auto pb-1 photo-strip">
               {photos.map((p, i) => (
                 <div key={i} className="relative flex-none w-16 h-16 bg-well overflow-hidden">
@@ -174,6 +180,7 @@ export default function Home() {
               {photos.length < 6 && (
                 <label className="relative flex-none w-16 h-16 border border-border flex flex-col items-center justify-center cursor-pointer overflow-hidden active:bg-text active:text-bg has-focus-visible:outline-4 has-focus-visible:outline-accent has-focus-visible:outline-offset-2">
                   <span className="text-xs">+ Add</span>
+                  <span className="text-2xs font-mono text-text-muted">{photos.length}/6</span>
                   <input
                     type="file"
                     accept="image/*"
@@ -185,7 +192,6 @@ export default function Home() {
                 </label>
               )}
             </div>
-            <p className="m-0 text-xs text-text-muted font-mono">{photos.length}/6</p>
           </div>
         )}
 
@@ -221,7 +227,7 @@ export default function Home() {
               )}
             </div>
 
-            <ul className="m-0 p-0 list-none flex flex-wrap gap-1">
+            <ul className="m-0 px-0 py-1 list-none flex flex-wrap gap-1">
               {ingredients.map((ing, i) => (
                 <li key={i} className="inline-flex items-center gap-0.5 pl-2 pr-0.5 border border-border rounded-full text-sm">
                   {ing}
@@ -270,28 +276,34 @@ export default function Home() {
         {/* ── Recipes ──
             Each row links out to the full recipe on Spoonacular.
             Shows how many ingredients you already have vs. still need.
-            Hover underlines the title; no fill. Focus ring is inset so the
-            full-width row can't clip it. */}
-        {recipes.length > 0 && (
-          <section className="border-t border-border pt-4">
-            <h2 className="m-0 mb-3 font-sans font-normal text-xs uppercase tracking-widest text-text-muted">Possible dishes</h2>
-            <ul className="m-0 p-0 list-none border-b border-border">
-              {recipes.map((recipe) => (
-                <li key={recipe.id} className="border-t border-border">
+            Each dish is a bordered card; pressing inverts it. */}
+        {[
+          { title: "Ready to make", list: readyRecipes },
+          { title: "Need a few things", list: needMoreRecipes },
+        ].map(({ title, list }) => list.length > 0 && (
+          <section key={title} className="border-t border-border pt-4">
+            <h2 className="m-0 mb-3 font-sans font-normal text-xs uppercase tracking-widest text-text-muted">
+              {title} <span className="font-mono">{list.length}</span>
+            </h2>
+            <ul className="m-0 p-0 list-none space-y-2">
+              {list.map((recipe) => (
+                <li key={recipe.id}>
                   <a
                     href={`https://spoonacular.com/recipes/${recipe.title.toLowerCase().replace(/\s+/g, "-")}-${recipe.id}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="group flex gap-2 py-2 text-text no-underline focus-visible:outline-offset-[-4px]"
+                    className="group flex bg-bg text-text no-underline border border-border active:bg-text active:text-bg"
                   >
                     {recipe.image && (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={recipe.image} alt="" className="w-11 h-11 object-cover flex-none" />
+                      <img src={recipe.image} alt="" className="w-12 min-h-12 self-stretch object-cover flex-none border-r border-border" />
                     )}
-                    <div className="flex-1 min-w-0 flex flex-col justify-center gap-0.5">
+                    <div className="flex-1 min-w-0 flex flex-col justify-center gap-0.5 px-2 py-1">
                       <p className="m-0 font-display text-md line-clamp-2 group-hover:underline underline-offset-2">{recipe.title}</p>
-                      <p className="m-0 text-xs text-text-muted font-mono">
-                        {recipe.usedIngredientCount} have · {recipe.missedIngredientCount} needed
+                      <p className="m-0 text-xs text-text-muted group-active:text-bg">
+                        {recipe.missedIngredientCount === 0
+                          ? `Uses ${recipe.usedIngredientCount} of yours`
+                          : `Need: ${recipe.missedIngredients.map((m) => m.name).join(", ")}`}
                       </p>
                     </div>
                   </a>
@@ -299,7 +311,7 @@ export default function Home() {
               ))}
             </ul>
           </section>
-        )}
+        ))}
 
         {status === "done" && recipes.length === 0 && (
           <p className="m-0 text-sm text-text-muted py-6 text-center">
@@ -319,12 +331,12 @@ export default function Home() {
           While scanning it turns into a plain bordered button so the progress
           text stays readable (the kit's faded disabled state would not be). */}
       <div
-        className="fixed bottom-0 inset-x-0 px-3 pt-2 bg-bg border-t-2 border-border"
+        className="fixed bottom-0 inset-x-0 px-3 pt-2 bg-dock border-t-2 border-border"
         style={{ paddingBottom: "calc(1.125rem + env(safe-area-inset-bottom))" }}
       >
         <div className="max-w-tablet mx-auto">
           {photos.length === 0 ? (
-            <label className="btn btn-accent relative block w-full text-center overflow-hidden active:bg-accent-hover active:border-accent-hover has-focus-visible:outline-4 has-focus-visible:outline-accent has-focus-visible:outline-offset-2">
+            <label className="btn btn-accent border-text relative block w-full text-center overflow-hidden active:bg-accent-hover has-focus-visible:outline-4 has-focus-visible:outline-accent has-focus-visible:outline-offset-2">
               Add photos
               <input
                 type="file"
@@ -338,7 +350,7 @@ export default function Home() {
             <button
               onClick={scan}
               disabled={isScanning}
-              className="btn btn-accent w-full disabled:opacity-100 disabled:bg-bg disabled:text-text disabled:border-border disabled:font-normal"
+              className="btn btn-accent border-text w-full disabled:opacity-100 disabled:bg-bg disabled:text-text disabled:border-border disabled:font-normal"
             >
               {statusText}
             </button>
