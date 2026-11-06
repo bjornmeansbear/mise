@@ -1,0 +1,469 @@
+/*
+  kit.css — shared color + layout primitives across OOKB / Wjerk projects
+  (onething, a.wjerk.shop, bjornpaedia, oblique, and whatever's next)
+
+  Framework-agnostic: plain CSS custom properties + base rules, no build
+  step required. Drop this file into a static site (<link rel="stylesheet">)
+  or @import it into a SvelteKit app's app.css. Works either way.
+
+  Source of truth for the raw color scale + semantic layer is
+  src/app.css in onething — that's where the gray-6-not-gray-5 AA fix
+  landed first. If you change a value, change it there too (or promote
+  onething's file to be literally this one — see RULES.md).
+
+  See RULES.md in this repo for the reasoning behind every rule below.
+*/
+
+:root {
+  /* ---- raw OKLCH-derived scale, 10 steps (0 = lightest, 9 = darkest) ---- */
+  /* red */
+  --red-0: rgb(255,222,218); --red-1: rgb(255,207,204); --red-2: rgb(255,185,182);
+  --red-3: rgb(253,155,152); --red-4: rgb(222,116,115); --red-5: rgb(187,74,76);
+  --red-6: rgb(142,42,47);   --red-7: rgb(98,9,21);     --red-8: rgb(57,0,0);
+  --red-9: rgb(31,0,0);
+  /* orange */
+  --orange-0: rgb(255,229,216); --orange-1: rgb(255,215,201); --orange-2: rgb(255,194,179);
+  --orange-3: rgb(240,165,149); --orange-4: rgb(208,128,112); --orange-5: rgb(173,88,72);
+  --orange-6: rgb(130,57,43);   --orange-7: rgb(89,27,17);    --orange-8: rgb(50,0,0);
+  --orange-9: rgb(26,0,0);
+  /* yellow */
+  --yellow-0: rgb(254,251,187); --yellow-1: rgb(241,238,171); --yellow-2: rgb(221,218,147);
+  --yellow-3: rgb(195,191,113); --yellow-4: rgb(162,156,67);  --yellow-5: rgb(127,120,0);
+  --yellow-6: rgb(92,85,0);     --yellow-7: rgb(59,52,0);     --yellow-8: rgb(29,22,0);
+  --yellow-9: rgb(11,5,0);
+  /* goldenrod — OKLCH hue 91, restored from the Wjerk palette (Golden Rod ≈ 3);
+     warmer and deeper than "yellow". */
+  --goldenrod-0: rgb(255,247,222); --goldenrod-1: rgb(255,234,174); --goldenrod-2: rgb(236,210,137);
+  --goldenrod-3: rgb(213,184,98);  --goldenrod-4: rgb(181,149,46);  --goldenrod-5: rgb(142,113,0);
+  --goldenrod-6: rgb(101,80,0);    --goldenrod-7: rgb(63,49,0);     --goldenrod-8: rgb(29,21,0);
+  --goldenrod-9: rgb(9,5,0);
+  /* green */
+  --green-0: rgb(235,255,217); --green-1: rgb(221,242,202); --green-2: rgb(201,222,181);
+  --green-3: rgb(173,196,151); --green-4: rgb(137,162,113); --green-5: rgb(101,126,73);
+  --green-6: rgb(69,91,44);    --green-7: rgb(39,57,17);    --green-8: rgb(13,27,0);
+  --green-9: rgb(2,8,0);
+  /* blue */
+  --blue-0: rgb(235,251,249); --blue-1: rgb(221,238,236); --blue-2: rgb(201,218,216);
+  --blue-3: rgb(172,191,189); --blue-4: rgb(137,157,155); --blue-5: rgb(100,122,120);
+  --blue-6: rgb(68,87,85);    --blue-7: rgb(39,54,53);    --blue-8: rgb(12,25,24);
+  --blue-9: rgb(1,7,7);
+  /* cornflower — a true blue (OKLCH hue 263), restored from the original Wjerk
+     palette (Cornflower ≈ 5, Dark Cornflower ≈ 6, Navy ≈ 7); "blue" above is
+     a teal-gray. Same lightness grid as every scale here. See RULES.md
+     "Color: the original Wjerk palette". */
+  --cornflower-0: rgb(243,247,255); --cornflower-1: rgb(225,236,255); --cornflower-2: rgb(190,213,255);
+  --cornflower-3: rgb(158,187,243); --cornflower-4: rgb(121,152,212); --cornflower-5: rgb(83,115,178);
+  --cornflower-6: rgb(53,81,136);   --cornflower-7: rgb(26,49,94);    --cornflower-8: rgb(5,19,53);
+  --cornflower-9: rgb(1,5,23);
+  /* purple — a muted gray-purple leaning blue (OKLCH hue 315). Moved from
+     ~336° on 2026-09-11: it had drifted pinker than the original Wjerk Purple
+     (329°) and read as the accent at the pale steps. Lightness and chroma
+     unchanged, so every contrast holds. */
+  --purple-0: rgb(250,239,255); --purple-1: rgb(244,226,253); --purple-2: rgb(225,205,235);
+  --purple-3: rgb(199,178,209); --purple-4: rgb(165,143,175); --purple-5: rgb(130,106,141);
+  --purple-6: rgb(94,73,103);   --purple-7: rgb(60,43,68);    --purple-8: rgb(29,16,35);
+  --purple-9: rgb(11,3,15);
+  /* pink — the Wjerk accent, see RULES.md "Accent color". Rebuilt 2026-09-11
+     at the original Wjerk Pink's softer chroma (#DB4F7A, OKLCH C 0.178 vs the
+     old scale's 0.226): same lightness and hue per step, dustier throughout.
+     The original sits between steps 4 and 5; pink-5 still carries small text
+     (4.78:1 on the White). */
+  --pink-0: rgb(248,207,230); --pink-1: rgb(246,192,216); --pink-2: rgb(243,171,197);
+  --pink-3: rgb(240,141,170); --pink-4: rgb(232,103,138); --pink-5: rgb(197,57,101);
+  --pink-6: rgb(150,41,70);   --pink-7: rgb(106,26,42);   --pink-8: rgb(62,12,16);
+  --pink-9: rgb(36,4,4);
+  /* brown */
+  --brown-0: rgb(251,245,242); --brown-1: rgb(238,232,229); --brown-2: rgb(219,212,209);
+  --brown-3: rgb(192,185,181); --brown-4: rgb(158,151,147); --brown-5: rgb(122,115,111);
+  --brown-6: rgb(88,81,78);    --brown-7: rgb(55,50,47);    --brown-8: rgb(25,21,19);
+  --brown-9: rgb(8,5,4);
+  /* gray (warm) */
+  --gray-0: rgb(247,248,238); --gray-1: rgb(234,234,224); --gray-2: rgb(215,215,204);
+  --gray-3: rgb(187,187,176); --gray-4: rgb(153,153,141); --gray-5: rgb(117,117,105);
+  --gray-6: rgb(83,83,72);    --gray-7: rgb(52,51,42);    --gray-8: rgb(23,23,15);
+  --gray-9: rgb(6,6,2);
+  /* purple-gray — a gray that leans purple (OKLCH hue 286, the gray scale's
+     chroma shape at ~2×), restored from the Wjerk palette: Purple Gray
+     (#777783) ≈ step 5. The night-time twin of the warm gray. */
+  --purple-gray-0: rgb(245,245,255); --purple-gray-1: rgb(233,233,254); --purple-gray-2: rgb(210,210,232);
+  --purple-gray-3: rgb(184,184,207); --purple-gray-4: rgb(150,149,174); --purple-gray-5: rgb(114,114,138);
+  --purple-gray-6: rgb(80,80,102);   --purple-gray-7: rgb(49,49,67);    --purple-gray-8: rgb(21,20,36);
+  --purple-gray-9: rgb(5,4,17);
+  /* dark-gray (cool blue-gray) */
+  --dark-gray-0: rgb(242,248,248); --dark-gray-1: rgb(229,235,235); --dark-gray-2: rgb(209,215,215);
+  --dark-gray-3: rgb(181,188,188); --dark-gray-4: rgb(147,154,154); --dark-gray-5: rgb(110,118,118);
+  --dark-gray-6: rgb(77,84,84);    --dark-gray-7: rgb(46,52,52);    --dark-gray-8: rgb(19,23,23);
+  --dark-gray-9: rgb(4,6,6);
+  /* light-gray (green-tinted) */
+  --light-gray-0: rgb(239,251,233); --light-gray-1: rgb(225,238,219); --light-gray-2: rgb(205,219,199);
+  --light-gray-3: rgb(177,192,170); --light-gray-4: rgb(142,158,135); --light-gray-5: rgb(106,122,98);
+  --light-gray-6: rgb(73,88,66);    --light-gray-7: rgb(43,55,37);    --light-gray-8: rgb(16,25,11);
+  --light-gray-9: rgb(3,8,1);
+
+  /* ---- the Wjerk palette's own white and black, and their scales ----
+     The originals (Figma "OOKB Palette" styles; the palette is Wjerk now): a
+     yellower cream than gray-0 and a softer black than brown-8. They are the
+     kit's ground and text (13.73:1), and each heads a scale — papers and inks.
+     Unlike the hue scales these don't run pale-to-dark: they're a material.
+     white: white-0 is the White exactly; each step warmer and creamier. The
+       Black holds on every step (≥9.72:1), gray-6 ≥5.20, pink-5 ≥3.48.
+       Steps are close (ΔE ~1.4) — paper stocks, not a ramp.
+     black: black-9 is the Black exactly; lighter warm charcoals below it, each
+       AA as text on the White (black-0 5.69:1). black-7 ≈ the palette's
+       Brown (#3C3634). */
+  --white-0: rgb(248,250,231); --white-1: rgb(245,246,222); --white-2: rgb(241,242,214);
+  --white-3: rgb(239,238,206); --white-4: rgb(236,233,199); --white-5: rgb(233,229,191);
+  --white-6: rgb(231,224,183); --white-7: rgb(229,220,175); --white-8: rgb(227,215,168);
+  --white-9: rgb(225,211,160);
+  --black-0: rgb(106,97,93);   --black-1: rgb(99,90,87);    --black-2: rgb(92,84,80);
+  --black-3: rgb(85,77,74);    --black-4: rgb(78,71,68);    --black-5: rgb(71,64,62);
+  --black-6: rgb(64,58,56);    --black-7: rgb(58,52,50);    --black-8: rgb(51,46,44);
+  --black-9: rgb(45,40,38);
+  --wjerk-white: var(--white-0); /* #F8FAE7 */
+  --wjerk-black: var(--black-9); /* #2D2826 */
+
+  /* ---- the rest of the original Wjerk palette, exact ----
+     The Figma "OOKB Palette" styles at their own values (RULES.md "Color: the
+     original Wjerk palette"). The ramps above were built from these hues, but
+     a ramp step only lands on an original when the lightness happens to match
+     — Med Gray, Dark Gray, Pink and Orange fall between steps. These keep the
+     originals usable as themselves. Fills first: most were made for White
+     type reversed out of them; check contrast per pairing (table in RULES.md). */
+  --wjerk-brown:            #3C3634;
+  --wjerk-dark-gray:        #616767;
+  --wjerk-med-gray:         #858479; /* the main gray; legacy LESS @ookb-gray rgb(132,132,120) */
+  --wjerk-pink:             #DB4F7A; /* legacy LESS @ookb-pink is brighter, #EC4079 */
+  --wjerk-red:              #9F5B59;
+  --wjerk-orange:           #B97868;
+  --wjerk-yellow:           #C5C071;
+  --wjerk-goldenrod:        #CBAA46;
+  --wjerk-light-green-gray: #C5D3BD;
+  --wjerk-green:            #91A478;
+  --wjerk-dark-green:       #6A8472;
+  --wjerk-light-blue:       #A1B2B1;
+  --wjerk-cornflower:       #627FBB;
+  --wjerk-dark-cornflower:  #3E5F9A;
+  --wjerk-navy:             #2C416B;
+  --wjerk-purple:           #A38DA1;
+  --wjerk-purple-gray:      #777783;
+
+  /* ---- semantic layer ----
+     text-muted is gray-6 (7.3:1 on --color-bg), not gray-5 (4.35:1, fails AA).
+     Any new "muted"/"subtle" token needs its contrast checked against the
+     background it actually sits on before shipping — don't trust the name. */
+  --color-bg: var(--wjerk-white);
+  --color-surface: var(--wjerk-white);
+  --color-surface-2: var(--wjerk-white);
+  --color-text: var(--wjerk-black);
+  --color-text-muted: var(--gray-6);
+  --color-text-subtle: var(--gray-6);
+  --color-border: var(--color-text);
+  --color-border-subtle: var(--color-text);
+  /* --color-frame: the thicker, decorative border used for hero/frame
+     treatments (see .frame-thick below and oblique's .cool-border). Distinct
+     from --color-border so a project can give the frame its own color
+     without changing every plain divider. Defaults to matching --color-text. */
+  --color-frame: var(--color-text);
+
+  /* accent = pink, the Wjerk color, carried through every past iteration of
+     this work. Not "brand pink for onething only" — the kit default.
+     A project can override it (see RULES.md "Accent color"), but pink is
+     the answer unless there's a specific reason to change it. */
+  --color-accent: var(--pink-5);
+  --color-accent-hover: var(--pink-6);
+  --color-accent-subtle: var(--pink-0);
+
+  --color-success: var(--green-6);
+  --color-success-bg: var(--light-gray-0);
+  --color-warning: var(--yellow-6);
+  --color-warning-bg: var(--yellow-0);
+  --color-danger: var(--red-6);
+  --color-danger-bg: var(--red-0);
+  --color-info: var(--dark-gray-6);
+  --color-info-bg: var(--dark-gray-0);
+
+  /* ---- type ----
+     --font-sans is the "low-energy" default: system stack, no download, no
+     licensing to think about. --font-display starts out equal to it — a
+     project earns a different --font-display by self-hosting an open/libre
+     (OFL, etc.) typeface and overriding this variable, the way oblique does
+     with Basteleur. Never point either at a commercial/proprietary font. */
+  --font-sans: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-display: var(--font-sans);
+  --font-mono: ui-monospace, 'SFMono-Regular', Menlo, Consolas, 'Liberation Mono', monospace;
+
+  /* ---- type scale ----
+     Baseline-grid, not a ratio scale (see RULES.md "Typography: baseline
+     grid, not a ratio scale"). Line-heights are even multiples of a 6px
+     (0.375rem) unit — 18px, 24px, 30px, 36px, 42px, 54px — and font-sizes
+     are chosen to pair with those rungs; the ratio shrinks as size grows
+     (more leading needed for small text, less for large), same principle
+     as Bringhurst/Lupton baseline grids. Every value is rem so the whole
+     scale rides along if a project changes the root font-size — no
+     variable does that by default here, kept as a documented technique
+     in RULES.md instead. */
+  --text-2xs: 0.75rem;    --leading-2xs: 1.125rem;  /* 12/18 · 1.5  — fine print, timestamps */
+  --text-xs:  0.8125rem;  --leading-xs:  1.125rem;  /* 13/18 · 1.38 — labels, meta */
+  --text-sm:  0.875rem;   --leading-sm:  1.125rem;  /* 14/18 · 1.29 — captions, secondary UI */
+  --text-base:1rem;       --leading-base:1.5rem;    /* 16/24 · 1.5  — body copy, default */
+  --text-md:  1.125rem;   --leading-md:  1.5rem;    /* 18/24 · 1.33 — lead paragraph */
+  --text-lg:  1.375rem;   --leading-lg:  1.875rem;  /* 22/30 · 1.36 — h5 */
+  --text-xl:  1.75rem;    --leading-xl:  2.25rem;   /* 28/36 · 1.29 — h3/h4 */
+  --text-2xl: 2.25rem;    --leading-2xl: 2.625rem;  /* 36/42 · 1.17 — h2 */
+  --text-3xl: 3rem;       --leading-3xl: 3.375rem;  /* 48/54 · 1.13 — h1 */
+
+  color-scheme: light;
+}
+
+/* ---- dark mode ----
+   The same brown scale with its ends swapped: brown-9 ground, brown-0 text,
+   pink-3 accent (pink-5 falls to 4.01:1 here). Every pair measured in
+   RULES.md "Dark mode"; scripts/contrast.py checks them from this block.
+
+   Follows the viewer's system setting. data-theme on <html> overrides it
+   either way: "light" keeps a page light (one with hard-coded light colors
+   that isn't ready), "dark" forces dark (a saved toggle choice — set it from
+   an inline script in <head> so the page never flashes the other theme).
+
+   :where() keeps these at plain :root weight, so a project's own token
+   overrides, loaded after this file, still win in dark mode too. The two
+   blocks must stay identical. */
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --color-bg: var(--brown-9);
+    --color-surface: var(--brown-9);
+    --color-surface-2: var(--brown-9);
+    --color-text: var(--brown-0);          /* 18.81:1 */
+    --color-text-muted: var(--brown-3);    /* 10.49:1 */
+    --color-text-subtle: var(--brown-4);   /* 7.06:1, the floor: brown-5 fails */
+    --color-accent: var(--pink-3);         /* 8.80:1 */
+    --color-accent-hover: var(--pink-2);
+    --color-accent-subtle: var(--pink-8);
+    --color-success: var(--green-3);
+    --color-success-bg: var(--light-gray-8);
+    --color-warning: var(--yellow-3);
+    --color-warning-bg: var(--yellow-8);
+    --color-danger: var(--red-3);
+    --color-danger-bg: var(--red-8);
+    --color-info: var(--dark-gray-3);
+    --color-info-bg: var(--dark-gray-8);
+  }
+}
+
+:root:where([data-theme="dark"]) {
+  color-scheme: dark;
+  --color-bg: var(--brown-9);
+  --color-surface: var(--brown-9);
+  --color-surface-2: var(--brown-9);
+  --color-text: var(--brown-0);
+  --color-text-muted: var(--brown-3);
+  --color-text-subtle: var(--brown-4);
+  --color-accent: var(--pink-3);
+  --color-accent-hover: var(--pink-2);
+  --color-accent-subtle: var(--pink-8);
+  --color-success: var(--green-3);
+  --color-success-bg: var(--light-gray-8);
+  --color-warning: var(--yellow-3);
+  --color-warning-bg: var(--yellow-8);
+  --color-danger: var(--red-3);
+  --color-danger-bg: var(--red-8);
+  --color-info: var(--dark-gray-3);
+  --color-info-bg: var(--dark-gray-8);
+}
+/* ---- end dark mode ---- */
+
+/* ---- base reset ---- */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+/* The browser's own [hidden] rule lives in the UA stylesheet, so *any* author
+   rule that sets display beats it regardless of specificity — .chips { display:
+   flex } silently leaves a hidden element on screen. Restore what the attribute
+   is specified to do. until-found is exempt: the browser reveals it on
+   find-in-page and needs it rendered. Found in di200-fieldnotes 2026-09-16. */
+[hidden]:not([hidden='until-found']) {
+  display: none !important;
+}
+
+html, body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  line-height: var(--leading-base);
+  background: var(--color-bg);
+  color: var(--color-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ---- type scale applied ----
+   Margins sit on the same baseline unit as the type scale (1.5rem = one
+   base line) so vertical rhythm holds across headings and body copy. */
+h1, h2, h3, h4, h5, h6, p {
+  margin: 0 0 1.5rem;
+  font-family: var(--font-display);
+  font-weight: bold;
+}
+
+h1 { font-size: var(--text-3xl); line-height: var(--leading-3xl); }
+h2 { font-size: var(--text-2xl); line-height: var(--leading-2xl); }
+h3 { font-size: var(--text-xl);  line-height: var(--leading-xl); }
+h4 { font-size: var(--text-lg);  line-height: var(--leading-lg); }
+h5 { font-size: var(--text-md);  line-height: var(--leading-md); }
+h6 { font-size: var(--text-base); line-height: var(--leading-base); }
+
+p {
+  font-family: var(--font-sans);
+  font-weight: normal;
+}
+
+small { font-size: var(--text-sm); line-height: var(--leading-sm); }
+
+/* Deliberately visible focus ring — never suppress focus-visible.
+   Thick enough to read as part of the design, not a default-browser
+   afterthought. */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 0.25rem solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* ---- structural primitives: black rules, no shadow, no gradient ---- */
+
+.divider {
+  border: none;
+  border-top: 1px solid var(--color-border);
+  margin: 1.5rem 0;
+}
+
+/* A bordered panel — no title-bar chrome, no drop shadow. Structure comes
+   from rules (border-top/bottom) and whitespace, not elevation. */
+.panel {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+}
+
+.panel-header {
+  border-bottom: 1px solid var(--color-border);
+  padding: 1.25rem 2rem;
+  font-weight: bold;
+  font-size: 1.25rem;
+}
+
+.panel-body {
+  padding: 2rem;
+}
+
+.panel-footer {
+  border-top: 1px solid var(--color-border);
+  padding: 1rem 2rem;
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  color: var(--color-text-muted);
+}
+
+/* Buttons: bordered, no gradient/shadow, invert fg/bg on press instead of
+   using elevation to show state. */
+.btn {
+  font-family: inherit;
+  font-size: var(--text-base);
+  padding: 0.875rem 1.75rem;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+  color: var(--color-text);
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.btn:active:not(:disabled) {
+  background: var(--color-text);
+  color: var(--color-bg);
+  border-color: var(--color-text);
+}
+
+.btn-accent {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: var(--color-bg);
+  font-weight: bold;
+}
+
+.btn-accent:active:not(:disabled) {
+  background: var(--color-accent-hover);
+  border-color: var(--color-accent-hover);
+}
+
+/* Small pill/tag — a full pill. Structural chrome (panels, buttons,
+   dividers) stays square; see RULES.md "Structure: rules, not chrome". */
+.tag {
+  display: inline-block;
+  border: 1px solid var(--color-accent);
+  border-radius: 999px;
+  padding: 0.2em 0.9em;
+  font-size: 0.8em;
+}
+
+.tag:hover {
+  background: var(--color-accent-hover);
+  border-color: var(--color-accent-hover);
+  color: var(--color-bg);
+}
+
+/* Thick decorative frame (oblique's .cool-border pattern). Scales with the
+   viewport instead of jumping at a breakpoint. */
+.frame-thick {
+  border: clamp(0.75rem, 4vw, 2rem) solid var(--color-frame);
+}
+
+.frame-thin {
+  border: 2px solid var(--color-text);
+}
+
+/* Rotated accent — a stamp/callout/heading knocked a few degrees off
+   horizontal, not a page-wide treatment. Override --tilt per element to
+   vary within the usual 7–12deg trope range. */
+.tilt {
+  --tilt: 9deg;
+  display: inline-block;
+  transform: rotate(var(--tilt));
+}
+
+/* Meta / caption text
+   Both happened to already match a type-scale rung exactly (0.8125rem →
+   --text-xs, 0.875rem → --text-sm) once the scale existed — repointed at
+   the tokens rather than kept as coincidentally-matching literals. */
+.label-upper {
+  font-size: var(--text-xs);
+  line-height: var(--leading-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--color-text-muted);
+}
+
+.caption-muted {
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+/* ---- breakpoint convention ----
+   No custom media query variables — this file has no build step and needs
+   to work as a plain <link>. Use these two values directly in @media rules
+   wherever a project needs them; keep it mobile-first (base styles are the
+   stacked/single-column layout, media queries layer on wider treatments):
+
+   @media (min-width: 40rem) { ... }   tablet / two-column
+   @media (min-width: 55rem) { ... }   desktop / wider treatment
+*/
