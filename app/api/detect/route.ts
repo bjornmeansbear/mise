@@ -1,11 +1,15 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { NextRequest, NextResponse } from "next/server";
+import { guard } from "../../lib/server/access";
 
 export const maxDuration = 30;
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 export async function POST(req: NextRequest) {
+  const blocked = await guard(req, "scan"); // household, or a guest with scans left
+  if (blocked) return blocked;
+
   const { images, known = [] }: { images: string[]; known?: string[] } = await req.json();
 
   // Photos are scanned one at a time. `known` is the list found so far, so

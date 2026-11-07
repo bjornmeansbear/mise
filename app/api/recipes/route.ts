@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { guard } from "../../lib/server/access";
 
 export interface SpoonacularRecipe {
   id: number;
@@ -14,6 +15,9 @@ export interface SpoonacularRecipe {
 export const maxDuration = 30;
 
 export async function POST(req: NextRequest) {
+  const blocked = await guard(req, "search"); // household, or a guest with searches left
+  if (blocked) return blocked;
+
   const { ingredients }: { ingredients: string[] } = await req.json();
 
   if (!ingredients || ingredients.length === 0) {

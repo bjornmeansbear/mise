@@ -1,8 +1,18 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { SpoonacularRecipe } from "./api/recipes/route";
 import { dedupeIngredients, ingredientKey } from "./lib/ingredients";
+import { GUEST_LIMITS } from "./lib/limits";
+
+// What the household shares between phones (see Household below).
+type Shared = {
+  ingredients: string[];
+  recipes: SpoonacularRecipe[];
+  searchedFor: string;
+  picked: number[];
+};
+const CODE_KEY = "wjaffle-household"; // where this phone keeps the code
 
 // ─── Flow ─────────────────────────────────────────────────────────────────────
 // Photo by photo. Each photo is scanned as soon as it's added, and its
@@ -63,6 +73,103 @@ export default function Home() {
     window.scrollTo(0, 0);
   };
 
+  // ─── Household ───────────────────────────────────────────────────────────────
+  // Opening the app once with ?h=<code> joins the household: the code is kept
+  // on this phone and sent with every request. With it, scans and searches
+  // are unlimited and the fridge, recipes and list are shared between phones
+  // (photos stay on the phone that took them). Without it you're a guest:
+  // same app, a small daily allowance, nothing saved.
+
+  const [household, setHousehold] = useState(false);
+  const codeRef = useRef("");
+
+  const forgetHousehold = () => {
+    codeRef.current = "";
+    try { localStorage.removeItem(CODE_KEY); } catch {}
+    setHousehold(false);
+    synced.current = null;
+  };
+
+  // fetch, plus the household code. A 401 means the stored code was changed
+  // on the server; drop it and carry on as a guest.
+  const api = async (path: string, init: RequestInit = {}) => {
+    const res = await fetch(path, {
+      ...init,
+      headers: {
+        "Content-Type": "application/json",
+        ...(codeRef.current ? { "x-household": codeRef.current } : {}),
+      },
+    });
+    if (res.status === 401 && codeRef.current) forgetHousehold();
+    return res;
+  };
+
+  // What's shared, as saved JSON per field. `synced` holds the last version
+  // loaded or saved; null until the first load works (so a phone that can't
+  // reach the store never overwrites it with an empty fridge).
+  const synced = useRef<Record<string, string> | null>(null);
+  const snapshot = (s: Shared): Record<string, string> =>
+    Object.fromEntries(Object.entries(s).map(([k, v]) => [k, JSON.stringify(v)]));
+  const current = useRef<Shared>({ ingredients: [], recipes: [], searchedFor: "", picked: [] });
+  const busy = useRef(false);
+  const unsaved = () =>
+    !!synced.current &&
+    Object.entries(snapshot(current.current)).some(([k, v]) => synced.current![k] !== v);
+
+  const loadHousehold = async () => {
+    const res = await api("/api/household");
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      if (res.status === 401) setError(body.error ?? "That household link didn’t work.");
+      return; // 503: sharing isn't set up; the household still gets unlimited use
+    }
+    const state = (body.state ?? {}) as Partial<Shared>;
+    const s: Shared = {
+      ingredients: state.ingredients ?? [],
+      recipes: state.recipes ?? [],
+      searchedFor: String(state.searchedFor ?? ""),
+      picked: state.picked ?? [],
+    };
+    setList(s.ingredients);
+    setRecipes(s.recipes);
+    setSearchedFor(s.searchedFor);
+    setPicked(new Set(s.picked));
+    setStatus(s.searchedFor ? "done" : "idle");
+    current.current = s;
+    synced.current = snapshot(s);
+  };
+
+  // On first load: pick up a code from the link (then tidy it out of the
+  // address bar) or from this phone, and load the household.
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    const fromLink = url.searchParams.get("h")?.trim() || "";
+    let code = fromLink;
+    try {
+      if (fromLink) localStorage.setItem(CODE_KEY, fromLink);
+      else code = localStorage.getItem(CODE_KEY) || "";
+    } catch {}
+    if (fromLink) {
+      url.searchParams.delete("h");
+      history.replaceState(null, "", url);
+    }
+    if (!code) return;
+    codeRef.current = code;
+    setHousehold(true);
+    loadHousehold();
+    // Coming back to the app picks up the other phone's changes, unless
+    // something here is mid-scan or not yet saved.
+    const onShow = () => {
+      if (document.visibilityState !== "visible" || !synced.current) return;
+      if (busy.current || unsaved()) return;
+      loadHousehold();
+    };
+    document.addEventListener("visibilitychange", onShow);
+    return () => document.removeEventListener("visibilitychange", onShow);
+    // Runs once; everything it calls reads refs, not render-time values.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // ─── Photos ──────────────────────────────────────────────────────────────────
 
   // Shrink each photo before upload. A full-size iPhone photo is 3–8MB, over
@@ -94,9 +201,8 @@ export default function Home() {
     if (removed.current.has(id)) return; // removed before its turn came
     try {
       const image = await shrinkToDataUrl(file);
-      const res = await fetch("/api/detect", {
+      const res = await api("/api/detect", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ images: [image], known: listRef.current }),
       });
       if (!res.ok) {
@@ -157,11 +263,9 @@ export default function Home() {
     goTo("recipes"); // so the loading placeholder shows where the results will land
     setStatus("fetching");
     setError("");
-    setPicked(new Set());
     try {
-      const res = await fetch("/api/recipes", {
+      const res = await api("/api/recipes", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ingredients: list }),
       });
       if (!res.ok) {
@@ -170,6 +274,7 @@ export default function Home() {
       }
       const { recipes: fetched } = await res.json();
       setRecipes(fetched);
+      setPicked(new Set()); // old picks belong to old results
       setSearchedFor(list.join("\n"));
       setStatus("done");
     } catch (e) {
@@ -181,6 +286,28 @@ export default function Home() {
   const isScanning = photos.some((p) => p.state === "scanning");
   const isFetching = status === "fetching";
   const isStale = status === "done" && searchedFor !== ingredients.join("\n");
+
+  // ─── Saving (household only) ────────────────────────────────────────────────
+  // Half a second after the fridge, recipes or picks change, send whichever
+  // of them differ from the last save. Each field saves on its own, so two
+  // phones editing different things don't undo each other.
+  useEffect(() => {
+    current.current = { ingredients, recipes, searchedFor, picked: [...picked] };
+    busy.current = isScanning || isFetching;
+    if (!household || !synced.current || isFetching) return;
+    const now = snapshot(current.current);
+    const changed = Object.keys(now).filter((k) => synced.current![k] !== now[k]);
+    if (changed.length === 0) return;
+    const t = setTimeout(async () => {
+      const patch = Object.fromEntries(changed.map((k) => [k, JSON.parse(now[k])]));
+      const res = await api("/api/household", { method: "PATCH", body: JSON.stringify(patch) }).catch(() => null);
+      if (res?.ok && synced.current) {
+        for (const k of changed) synced.current[k] = now[k];
+      }
+    }, 500);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [household, ingredients, recipes, searchedFor, picked, isScanning, isFetching]);
 
   // "Ready" means nothing missing beyond pantry basics (salt, oil, water…),
   // which Spoonacular skips via ignorePantry. The rest sort by fewest missing.
@@ -389,6 +516,13 @@ export default function Home() {
                 <p className="m-0 mt-1 text-md">
                   Photograph your fridge and cabinets. Get recipes you can make with what’s there.
                 </p>
+                {/* Guests learn the allowance up front, not when they hit it. */}
+                {!household && (
+                  <p className="m-0 mt-2 text-sm text-text-muted">
+                    Free to try: {GUEST_LIMITS.scan.perVisitor} photo scans and{" "}
+                    {GUEST_LIMITS.search.perVisitor} recipe searches a day.
+                  </p>
+                )}
               </div>
             ) : (
               <h1 className="sr-only">Fridge</h1>

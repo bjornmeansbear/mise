@@ -17,10 +17,23 @@ Last updated 2026-11-06.
 Direction (2026-11-06): build it for the household (Kristian and his wife),
 not for everyone. Next steps, in order:
 
-1. **Save and share between both phones.** One household record (fridge
-   list, hidden/liked recipes, shopping list, household notes) on a small
-   key-value store, unlocked with a shared passphrase. No accounts. Photos
-   stay on the phone that took them.
+1. **Sharing between phones: built 2026-11-07, not switched on yet.**
+   To switch it on:
+   - Vercel dashboard → the `mise` project → Storage → add **Upstash Redis**
+     (free plan), connected to Production. It adds its own env vars.
+   - Vercel → Settings → Environment Variables → add `HOUSEHOLD_CODE` with
+     the value from `.env.local`. Redeploy.
+   - Open `https://<site>/?h=<code>` once on each phone. The phone keeps the
+     code and the address bar drops it.
+   - Set a monthly spending limit in the Anthropic console as a backstop.
+   How it works: `app/lib/server/access.ts` (who's asking, guest
+   allowance), `app/api/household/route.ts` (load/save), guest numbers in
+   `app/lib/limits.ts` (5 scans + 3 searches per guest a day; 30 scans and 20
+   searches a day across all guests). Without Upstash on the live site,
+   guests are refused and the household still works, just unshared.
+   Tested locally against a stand-in for Upstash, not the real one.
+   To change the code later: change it in Vercel and `.env.local`, redeploy,
+   open the new link on both phones.
 2. **"Not for us"** on each recipe card, so hidden recipes stay hidden after
    new searches. Ask Spoonacular for ~20 results so enough remain.
 3. **Meal-type chips** (Dinner · Brunch · Sweet · Under 30 min): switch to
