@@ -669,7 +669,7 @@ export default function Home() {
             )}
 
             {/* ── Recipe groups ──
-                Each card links out to the full recipe on Spoonacular. "Need a
+                Each card links out to the original recipe (sourceUrl), or Spoonacular's page if none. "Need a
                 few things" cards say what's missing and have a "+ List" toggle.
                 Each dish is a bordered card; pressing inverts it. */}
             {!isFetching && [
@@ -684,7 +684,7 @@ export default function Home() {
                   {list.map((recipe) => (
                     <li key={recipe.id} className="flex border border-border">
                       <a
-                        href={`https://spoonacular.com/recipes/${recipe.title.toLowerCase().replace(/\s+/g, "-")}-${recipe.id}`}
+                        href={recipe.sourceUrl || recipe.spoonacularSourceUrl || `https://spoonacular.com/recipes/${recipe.title.toLowerCase().replace(/\s+/g, "-")}-${recipe.id}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="group flex flex-1 min-w-0 bg-bg text-text no-underline active:bg-text active:text-bg"
@@ -700,6 +700,9 @@ export default function Home() {
                               ? `Uses ${recipe.usedIngredientCount} of yours`
                               : `Need: ${recipe.missedIngredients.map((m) => m.name).join(", ")}`}
                           </p>
+                          {recipe.sourceName && (
+                            <p className="m-0 text-xs text-text-muted group-active:text-bg">{recipe.sourceName} ↗</p>
+                          )}
                         </div>
                       </a>
                       {recipe.missedIngredientCount > 0 && (
