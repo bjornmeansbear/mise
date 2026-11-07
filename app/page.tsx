@@ -20,6 +20,15 @@ type Photo = {
 
 type Status = "idle" | "fetching" | "done";
 
+// Three views, switched from the tab bar at the bottom. Photos live inside
+// Fridge: they're only a way to get ingredients.
+type View = "fridge" | "recipes" | "list";
+const VIEWS: { id: View; label: string }[] = [
+  { id: "fridge", label: "Fridge" },
+  { id: "recipes", label: "Recipes" },
+  { id: "list", label: "List" },
+];
+
 export default function Home() {
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [status, setStatus] = useState<Status>("idle");
@@ -30,6 +39,8 @@ export default function Home() {
   const [error, setError] = useState("");
   const [picked, setPicked] = useState<Set<number>>(new Set()); // recipe ids on the shopping list
   const [copied, setCopied] = useState(false);
+  const [view, setView] = useState<View>("fridge");
+  const [photosOpen, setPhotosOpen] = useState(false); // photo strip, tucked away by default
 
   // Queued scans read the list between renders, so it also lives in a ref.
   // Every change to the list goes through setList to keep the two in step.
@@ -45,6 +56,12 @@ export default function Home() {
 
   const updatePhoto = (id: number, patch: Partial<Photo>) =>
     setPhotos((prev) => prev.map((p) => (p.id === id ? { ...p, ...patch } : p)));
+
+  // Each view starts at its top, not wherever the last one was scrolled to.
+  const goTo = (v: View) => {
+    setView(v);
+    window.scrollTo(0, 0);
+  };
 
   // ─── Photos ──────────────────────────────────────────────────────────────────
 
@@ -137,6 +154,7 @@ export default function Home() {
   const findRecipes = async () => {
     const list = listRef.current;
     if (list.length === 0) return;
+    goTo("recipes"); // so the loading placeholder shows where the results will land
     setStatus("fetching");
     setError("");
     setPicked(new Set());
@@ -216,12 +234,16 @@ export default function Home() {
   // Spacing is on a 6px unit: p-1 = 6px, p-4 = 24px. Kit element rules give
   // <p> and headings a bottom margin, so text outside a space-y-* stack sets m-0.
 
+  // Fresh results don't need another search: the button just goes to them.
+  const hasFreshRecipes = status === "done" && !isStale;
   const findLabel = isFetching
     ? "Building your menu…"
     : isScanning
     ? "Scanning…"
     : isStale
     ? "Update recipes"
+    : hasFreshRecipes
+    ? "See recipes"
     : "Find recipes";
 
   const liveText = isScanning
@@ -234,252 +256,426 @@ export default function Home() {
     ? `${recipes.length} possible dishes`
     : "";
 
+  // Tabs appear once there's anything to switch between.
+  const showTabs = photos.length > 0 || ingredients.length > 0 || recipes.length > 0;
+  const counts: Record<View, number> = {
+    fridge: ingredients.length,
+    recipes: recipes.length,
+    list: shoppingList.length,
+  };
+
+  // Tab keyboard pattern (WAI-ARIA): arrows, Home and End move between tabs
+  // and select as they go. Only the selected tab is in the Tab order.
+  const tabRefs = useRef<Record<View, HTMLButtonElement | null>>({ fridge: null, recipes: null, list: null });
+  const onTabKey = (e: React.KeyboardEvent) => {
+    const i = VIEWS.findIndex((v) => v.id === view);
+    const next =
+      e.key === "ArrowRight" ? (i + 1) % VIEWS.length
+      : e.key === "ArrowLeft" ? (i - 1 + VIEWS.length) % VIEWS.length
+      : e.key === "Home" ? 0
+      : e.key === "End" ? VIEWS.length - 1
+      : -1;
+    if (next < 0) return;
+    e.preventDefault();
+    goTo(VIEWS[next].id);
+    tabRefs.current[VIEWS[next].id]?.focus();
+  };
+
+  const scanning = photos.filter((p) => p.state === "scanning").length;
+  const failed = photos.filter((p) => p.state === "error").length;
+  const photoSummary = scanning
+    ? "Scanning…"
+    : failed
+    ? `${failed} didn’t scan`
+    : "";
+
+  const sectionHeading = "m-0 font-sans font-normal text-xs uppercase tracking-widest text-text-muted";
+  const emptyNote = "m-0 text-sm text-text-muted py-6 text-center";
+  const textLink = "underline underline-offset-2 text-text";
+
+  // Dock buttons aren't boxes in the dock, they ARE the dock: each fills its
+  // share of the strip edge to edge, split by 1px ink rules. Focus rings sit
+  // inset so the screen edge can't clip them.
+  const cell =
+    "flex-1 min-h-11 px-2 flex items-center justify-center text-center text-base cursor-pointer focus-visible:outline-4 focus-visible:-outline-offset-4 [&+*]:border-l [&+*]:border-border";
+  const plainCell = `${cell} bg-bg text-text focus-visible:outline-accent active:bg-text active:text-bg`;
+  // Pink while it's the next step. On pink the ring is ink (an accent ring
+  // would vanish). While busy it turns plain, so its progress text stays
+  // readable (the kit's faded disabled state would not be).
+  const primaryCell = `${cell} bg-accent text-bg font-bold focus-visible:outline-text active:bg-accent-hover disabled:bg-bg disabled:text-text disabled:font-normal disabled:cursor-default`;
+
+  // The bottom row's color runs into the home-indicator area on phones: the
+  // inset is added below the label, on top of the row's own height.
+  const safeBottom = (rem: number) => ({
+    paddingBottom: "env(safe-area-inset-bottom)",
+    minHeight: `calc(${rem}rem + env(safe-area-inset-bottom))`,
+  });
+
+  // Before the first photo there are no tabs, so this is the bottom row.
+  const photoInput = (
+    <label
+      style={showTabs ? undefined : safeBottom(4.125)}
+      className={`relative overflow-hidden has-focus-visible:outline-4 has-focus-visible:-outline-offset-4 ${
+        photos.length === 0
+          ? `${primaryCell} has-focus-visible:outline-text`
+          : `${plainCell} has-focus-visible:outline-accent`
+      }`}
+    >
+      {photos.length === 0 ? "Photograph your fridge" : "Another shelf"}
+      <input
+        type="file"
+        accept="image/*"
+        multiple
+        className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+        onChange={(e) => {
+          if (e.target.files) addFiles(e.target.files);
+          e.target.value = ""; // so the same photo can be picked again
+        }}
+      />
+    </label>
+  );
+
+  // What the dock offers above the tabs depends on the view.
+  const actions =
+    view === "fridge" ? (
+      <>
+        {photoInput}
+        {(photos.length > 0 || ingredients.length > 0) && (
+          <button
+            onClick={hasFreshRecipes ? () => goTo("recipes") : findRecipes}
+            disabled={isScanning || isFetching || ingredients.length === 0}
+            className={hasFreshRecipes ? plainCell : primaryCell}
+          >
+            {findLabel}
+          </button>
+        )}
+      </>
+    ) : view === "recipes" && (isStale || isFetching) ? (
+      <button onClick={findRecipes} disabled={isScanning || isFetching} className={primaryCell}>
+        {findLabel}
+      </button>
+    ) : view === "list" && shoppingList.length > 0 ? (
+      <>
+        <button onClick={copyList} className={plainCell}>{copied ? "Copied" : "Copy list"}</button>
+        {canShare && <button onClick={shareList} className={plainCell}>Share</button>}
+      </>
+    ) : null;
+
+
   return (
     <div className="min-h-screen flex flex-col">
 
-      {/* No header. Top padding clears the notch / status bar on phones. */}
+      {/* No header. Top padding clears the notch / status bar on phones.
+          Bottom padding clears the dock (actions + tabs). */}
       <main
-        className="flex-1 px-3 pb-24 space-y-6 max-w-tablet mx-auto w-full"
+        id="view-panel"
+        role={showTabs ? "tabpanel" : undefined}
+        aria-labelledby={showTabs ? `tab-${view}` : undefined}
+        className="flex-1 px-3 pb-32 space-y-6 max-w-tablet mx-auto w-full"
         style={{ paddingTop: "calc(2.25rem + env(safe-area-inset-top))" }}
       >
 
-        {/* ── Intro / photo strip ──
-            Before any photo: the pitch. After: a scrolling strip, each tile
-            labeled with how its scan went. */}
-        {photos.length === 0 ? (
-          <div>
-            <h1 className="m-0 font-display text-3xl font-thin italic">Stop waffling. Start cooking.</h1>
-            <p className="m-0 mt-1 text-md">
-              Create a list of recipes you can make from the photographs of your cabinet and refrigerator contents.
-            </p>
-          </div>
-        ) : (
-          <div className="flex gap-2 overflow-x-auto pb-1 photo-strip">
-            {photos.map((p, i) => (
-              <div key={p.id} className="relative flex-none w-16 h-16 bg-well overflow-hidden border border-border">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={p.preview} alt={`Photo ${i + 1}`} className="w-full h-full object-cover" />
-                <button
-                  onClick={() => removePhoto(p.id)}
-                  aria-label={`Remove photo ${i + 1}`}
-                  className="absolute top-1 right-1 w-4 h-4 bg-bg border border-border text-text text-xs flex items-center justify-center leading-none active:bg-text active:text-bg"
-                >
-                  ×
-                </button>
-                <p
-                  className={`m-0 absolute bottom-0 inset-x-0 bg-bg border-t border-border text-2xs text-center ${
-                    p.state === "error" ? "text-danger" : "text-text"
-                  } ${p.state === "scanning" ? "motion-safe:animate-pulse" : ""}`}
-                >
-                  {p.state === "scanning"
-                    ? "Scanning…"
-                    : p.state === "error"
-                    ? "Didn’t scan"
-                    : p.found
-                    ? `+${p.found} found`
-                    : "Nothing new"}
-                </p>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* ── Error ── */}
+        {/* ── Error ── shown in every view */}
         {error && (
           <p role="alert" className="m-0 text-sm text-danger border-l-2 border-danger pl-2">{error}</p>
         )}
 
-        {/* ── Ingredients loading placeholder (first photo only) ── */}
-        {isScanning && ingredients.length === 0 && (
-          <div aria-hidden="true" className="space-y-2 border-t border-border pt-4">
-            <div className="h-2 w-16 bg-well motion-safe:animate-pulse" />
-            <div className="flex flex-wrap gap-1">
-              {[80, 60, 100, 72, 56, 88].map((w, i) => (
-                <div key={i} className="h-4 rounded-full bg-well motion-safe:animate-pulse" style={{ width: w }} />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* ── Ingredients ──
-            Grows with each photo. Remove pills or add by hand. */}
-        {ingredients.length > 0 && (
-          <section className="space-y-3 border-t border-border pt-4">
-            <h2 className="m-0 font-sans font-normal text-xs uppercase tracking-widest text-text-muted">
-              On hand <span className="font-mono">{ingredients.length}</span>
-            </h2>
-
-            <ul className="m-0 px-0 py-1 list-none flex flex-wrap gap-1">
-              {ingredients.map((ing, i) => (
-                <li key={ing} className="inline-flex items-center gap-0.5 pl-2 pr-0.5 border border-border rounded-full text-sm">
-                  {ing}
-                  <button
-                    onClick={() => removeIngredient(i)}
-                    aria-label={`Remove ${ing}`}
-                    className="w-4 h-4 rounded-full flex items-center justify-center leading-none text-text-muted hover:text-text active:bg-text active:text-bg"
-                  >
-                    ×
-                  </button>
-                </li>
-              ))}
-            </ul>
-
-            <form onSubmit={addIngredient} className="flex gap-2">
-              <label htmlFor="new-ingredient" className="sr-only">Add ingredient</label>
-              <input
-                id="new-ingredient"
-                value={newIngredient}
-                onChange={(e) => setNewIngredient(e.target.value)}
-                placeholder="Add ingredient"
-                className="flex-1 min-w-0 px-2 py-2 bg-bg text-text border border-border text-sm"
-              />
-              <button type="submit" className="px-4 py-2 border border-border text-sm active:bg-text active:text-bg">
-                Add
-              </button>
-            </form>
-          </section>
-        )}
-
-        {/* ── Recipes loading placeholder ── */}
-        {isFetching && (
-          <div aria-hidden="true" className="space-y-3 border-t border-border pt-4">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="flex gap-2 motion-safe:animate-pulse">
-                <div className="w-11 h-11 bg-well flex-none" />
-                <div className="flex-1 space-y-1 py-1">
-                  <div className="h-2 bg-well w-3/4" />
-                  <div className="h-2 bg-well w-1/2" />
-                </div>
+        {/* ════ Fridge ════ */}
+        {view === "fridge" && (
+          <>
+            {photos.length === 0 && ingredients.length === 0 ? (
+              <div>
+                <h1 className="m-0 font-display text-3xl font-thin italic">Stop waffling. Start cooking.</h1>
+                <p className="m-0 mt-1 text-md">
+                  Photograph your fridge and cabinets. Get recipes you can make with what’s there.
+                </p>
               </div>
-            ))}
-          </div>
-        )}
+            ) : (
+              <h1 className="sr-only">Fridge</h1>
+            )}
 
-        {/* ── Recipes ──
-            Each card links out to the full recipe on Spoonacular. "Need a few
-            things" cards say what's missing and have a "+ List" toggle.
-            Each dish is a bordered card; pressing inverts it. */}
-        {!isFetching && [
-          { title: "Ready to make", list: readyRecipes },
-          { title: "Need a few things", list: needMoreRecipes },
-        ].map(({ title, list }) => list.length > 0 && (
-          <section key={title} className="border-t border-border pt-4">
-            <h2 className="m-0 mb-3 font-sans font-normal text-xs uppercase tracking-widest text-text-muted">
-              {title} <span className="font-mono">{list.length}</span>
-            </h2>
-            <ul className="m-0 p-0 list-none space-y-2">
-              {list.map((recipe) => (
-                <li key={recipe.id} className="flex border border-border">
-                  <a
-                    href={`https://spoonacular.com/recipes/${recipe.title.toLowerCase().replace(/\s+/g, "-")}-${recipe.id}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="group flex flex-1 min-w-0 bg-bg text-text no-underline active:bg-text active:text-bg"
-                  >
-                    {recipe.image && (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={recipe.image} alt="" className="w-12 min-h-12 self-stretch object-cover flex-none border-r border-border" />
-                    )}
-                    <div className="flex-1 min-w-0 flex flex-col justify-center gap-0.5 px-2 py-1">
-                      <p className="m-0 font-display text-md line-clamp-2 group-hover:underline underline-offset-2">{recipe.title}</p>
-                      <p className="m-0 text-xs text-text-muted group-active:text-bg">
-                        {recipe.missedIngredientCount === 0
-                          ? `Uses ${recipe.usedIngredientCount} of yours`
-                          : `Need: ${recipe.missedIngredients.map((m) => m.name).join(", ")}`}
-                      </p>
-                    </div>
-                  </a>
-                  {recipe.missedIngredientCount > 0 && (
-                    <button
-                      onClick={() => togglePicked(recipe.id)}
-                      aria-pressed={picked.has(recipe.id)}
-                      aria-label={`Add what ${recipe.title} needs to the shopping list`}
-                      className={`flex-none w-11 border-l border-border text-xs leading-tight ${
-                        picked.has(recipe.id) ? "bg-text text-bg" : "bg-bg text-text active:bg-text active:text-bg"
+            {/* ── Photos ──
+                Folded to one row by default. Open it to remove a photo or
+                check how each one scanned. */}
+            {photos.length > 0 && (
+              <section>
+                <button
+                  onClick={() => setPhotosOpen((o) => !o)}
+                  aria-expanded={photosOpen}
+                  aria-controls="photo-strip"
+                  className="w-full flex items-center gap-2 py-1 bg-transparent text-text text-left cursor-pointer"
+                >
+                  <span className={sectionHeading}>
+                    Photos <span className="font-mono">{photos.length}</span>
+                  </span>
+                  {photoSummary && (
+                    <span
+                      className={`text-xs ${failed && !scanning ? "text-danger" : "text-text"} ${
+                        scanning ? "motion-safe:animate-pulse" : ""
                       }`}
                     >
-                      {picked.has(recipe.id) ? "On list" : "+ List"}
-                    </button>
+                      {photoSummary}
+                    </span>
                   )}
-                </li>
-              ))}
-            </ul>
-          </section>
-        ))}
+                  <span aria-hidden="true" className="ml-auto text-xs text-text-muted">
+                    {photosOpen ? "Hide" : "Show"}
+                  </span>
+                </button>
 
-        {/* ── Shopping list ──
-            Everything the tapped dishes still need, in one copyable list. */}
-        {!isFetching && shoppingList.length > 0 && (
-          <section className="border-t border-border pt-4">
-            <h2 className="m-0 mb-3 font-sans font-normal text-xs uppercase tracking-widest text-text-muted">
-              Shopping list <span className="font-mono">{shoppingList.length}</span>
-            </h2>
-            <ul className="m-0 p-0 list-none border-t border-border">
-              {shoppingList.map((item) => (
-                <li key={item} className="py-1 border-b border-border text-sm">{item}</li>
-              ))}
-            </ul>
-            <div className="flex gap-2 mt-3">
-              <button onClick={copyList} className="btn flex-1">
-                {copied ? "Copied" : "Copy list"}
-              </button>
-              {canShare && (
-                <button onClick={shareList} className="btn flex-1">Share</button>
-              )}
-            </div>
-          </section>
+                {photosOpen && (
+                  <div id="photo-strip" className="flex gap-2 overflow-x-auto pt-2 pb-1 photo-strip">
+                    {photos.map((p, i) => (
+                      <div key={p.id} className="relative flex-none w-16 h-16 bg-well overflow-hidden border border-border">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={p.preview} alt={`Photo ${i + 1}`} className="w-full h-full object-cover" />
+                        <button
+                          onClick={() => removePhoto(p.id)}
+                          aria-label={`Remove photo ${i + 1}`}
+                          className="absolute top-1 right-1 w-4 h-4 bg-bg border border-border text-text text-xs flex items-center justify-center leading-none active:bg-text active:text-bg"
+                        >
+                          ×
+                        </button>
+                        <p
+                          className={`m-0 absolute bottom-0 inset-x-0 bg-bg border-t border-border text-2xs text-center ${
+                            p.state === "error" ? "text-danger" : "text-text"
+                          } ${p.state === "scanning" ? "motion-safe:animate-pulse" : ""}`}
+                        >
+                          {p.state === "scanning"
+                            ? "Scanning…"
+                            : p.state === "error"
+                            ? "Didn’t scan"
+                            : p.found
+                            ? `+${p.found} found`
+                            : "Nothing new"}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </section>
+            )}
+
+            {/* ── Ingredients loading placeholder (first photo only) ── */}
+            {isScanning && ingredients.length === 0 && (
+              <div aria-hidden="true" className="space-y-2 border-t border-border pt-4">
+                <div className="h-2 w-16 bg-well motion-safe:animate-pulse" />
+                <div className="flex flex-wrap gap-1">
+                  {[80, 60, 100, 72, 56, 88].map((w, i) => (
+                    <div key={i} className="h-4 rounded-full bg-well motion-safe:animate-pulse" style={{ width: w }} />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* ── Ingredients ──
+                Grows with each photo. Remove pills or add by hand. */}
+            {ingredients.length > 0 && (
+              <section className="space-y-3 border-t border-border pt-4">
+                <h2 className={sectionHeading}>
+                  On hand <span className="font-mono">{ingredients.length}</span>
+                </h2>
+
+                <ul className="m-0 px-0 py-1 list-none flex flex-wrap gap-1">
+                  {ingredients.map((ing, i) => (
+                    <li key={ing} className="inline-flex items-center gap-0.5 pl-2 pr-0.5 border border-border rounded-full text-sm">
+                      {ing}
+                      <button
+                        onClick={() => removeIngredient(i)}
+                        aria-label={`Remove ${ing}`}
+                        className="w-4 h-4 rounded-full flex items-center justify-center leading-none text-text-muted hover:text-text active:bg-text active:text-bg"
+                      >
+                        ×
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+
+                <form onSubmit={addIngredient} className="flex gap-2">
+                  <label htmlFor="new-ingredient" className="sr-only">Add ingredient</label>
+                  <input
+                    id="new-ingredient"
+                    value={newIngredient}
+                    onChange={(e) => setNewIngredient(e.target.value)}
+                    placeholder="Add ingredient"
+                    className="flex-1 min-w-0 px-2 py-2 bg-bg text-text border border-border text-sm"
+                  />
+                  <button type="submit" className="px-4 py-2 border border-border text-sm active:bg-text active:text-bg">
+                    Add
+                  </button>
+                </form>
+              </section>
+            )}
+          </>
         )}
 
-        {status === "done" && recipes.length === 0 && (
-          <p className="m-0 text-sm text-text-muted py-6 text-center">
-            Nothing found. Edit your larder above.
-          </p>
+        {/* ════ Recipes ════ */}
+        {view === "recipes" && (
+          <>
+            <h1 className="sr-only">Recipes</h1>
+
+            {isStale && !isFetching && (
+              <p className="m-0 text-sm text-text-muted border-l-2 border-border pl-2">
+                Your fridge changed since this search.
+              </p>
+            )}
+
+            {/* ── Recipes loading placeholder ── */}
+            {isFetching && (
+              <div aria-hidden="true" className="space-y-3">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="flex gap-2 motion-safe:animate-pulse">
+                    <div className="w-11 h-11 bg-well flex-none" />
+                    <div className="flex-1 space-y-1 py-1">
+                      <div className="h-2 bg-well w-3/4" />
+                      <div className="h-2 bg-well w-1/2" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* ── Recipe groups ──
+                Each card links out to the full recipe on Spoonacular. "Need a
+                few things" cards say what's missing and have a "+ List" toggle.
+                Each dish is a bordered card; pressing inverts it. */}
+            {!isFetching && [
+              { title: "Ready to make", list: readyRecipes },
+              { title: "Need a few things", list: needMoreRecipes },
+            ].map(({ title, list }, gi) => list.length > 0 && (
+              <section key={title} className={gi > 0 && readyRecipes.length > 0 ? "border-t border-border pt-4" : ""}>
+                <h2 className={`${sectionHeading} mb-3`}>
+                  {title} <span className="font-mono">{list.length}</span>
+                </h2>
+                <ul className="m-0 p-0 list-none space-y-2">
+                  {list.map((recipe) => (
+                    <li key={recipe.id} className="flex border border-border">
+                      <a
+                        href={`https://spoonacular.com/recipes/${recipe.title.toLowerCase().replace(/\s+/g, "-")}-${recipe.id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="group flex flex-1 min-w-0 bg-bg text-text no-underline active:bg-text active:text-bg"
+                      >
+                        {recipe.image && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={recipe.image} alt="" className="w-12 min-h-12 self-stretch object-cover flex-none border-r border-border" />
+                        )}
+                        <div className="flex-1 min-w-0 flex flex-col justify-center gap-0.5 px-2 py-1">
+                          <p className="m-0 font-display text-md line-clamp-2 group-hover:underline underline-offset-2">{recipe.title}</p>
+                          <p className="m-0 text-xs text-text-muted group-active:text-bg">
+                            {recipe.missedIngredientCount === 0
+                              ? `Uses ${recipe.usedIngredientCount} of yours`
+                              : `Need: ${recipe.missedIngredients.map((m) => m.name).join(", ")}`}
+                          </p>
+                        </div>
+                      </a>
+                      {recipe.missedIngredientCount > 0 && (
+                        <button
+                          onClick={() => togglePicked(recipe.id)}
+                          aria-pressed={picked.has(recipe.id)}
+                          aria-label={`Add what ${recipe.title} needs to the shopping list`}
+                          className={`flex-none w-11 border-l border-border text-xs leading-tight ${
+                            picked.has(recipe.id) ? "bg-text text-bg" : "bg-bg text-text active:bg-text active:text-bg"
+                          }`}
+                        >
+                          {picked.has(recipe.id) ? "On list" : "+ List"}
+                        </button>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ))}
+
+            {status === "idle" && (
+              <p className={emptyNote}>
+                No recipes yet. Add what’s on hand in{" "}
+                <button onClick={() => goTo("fridge")} className={textLink}>Fridge</button>, then find recipes.
+              </p>
+            )}
+            {status === "done" && recipes.length === 0 && (
+              <p className={emptyNote}>
+                Nothing found. Try editing your{" "}
+                <button onClick={() => goTo("fridge")} className={textLink}>Fridge</button>.
+              </p>
+            )}
+          </>
+        )}
+
+        {/* ════ Shopping list ════
+            Everything the tapped dishes still need, in one copyable list. */}
+        {view === "list" && (
+          <>
+            <h1 className="sr-only">Shopping list</h1>
+            {shoppingList.length > 0 ? (
+              <section>
+                <h2 className={`${sectionHeading} mb-3`}>
+                  Shopping list <span className="font-mono">{shoppingList.length}</span>
+                </h2>
+                <ul className="m-0 p-0 list-none border-t border-border">
+                  {shoppingList.map((item) => (
+                    <li key={item} className="py-1 border-b border-border text-sm">{item}</li>
+                  ))}
+                </ul>
+              </section>
+            ) : (
+              <p className={emptyNote}>
+                Nothing on the list yet. In{" "}
+                <button onClick={() => goTo("recipes")} className={textLink}>Recipes</button>, tap “+ List” on a
+                dish to add what it needs.
+              </p>
+            )}
+          </>
         )}
 
         {/* Announces progress to screen readers. */}
         <p className="sr-only" aria-live="polite">{liveText}</p>
       </main>
 
-      {/* ── Action bar ──
-          Fixed at the bottom on the oblique gray, 2px rule above, no shadow.
-          Before any photo: one pink "Add photos". After: "Another photo"
-          (plain) and "Find recipes" (pink, the one primary action). While
-          busy, the pink button turns plain so its progress text stays
-          readable (the kit's faded disabled state would not be). */}
-      <div
-        className="fixed bottom-0 inset-x-0 px-3 pt-2 bg-dock border-t-2 border-border"
-        style={{ paddingBottom: "calc(1.125rem + env(safe-area-inset-bottom))" }}
-      >
-        <div className="max-w-tablet mx-auto flex gap-2">
-          <label
-            className={`btn relative block text-center overflow-hidden has-focus-visible:outline-4 has-focus-visible:outline-accent has-focus-visible:outline-offset-2 ${
-              photos.length === 0
-                ? "btn-accent border-text w-full active:bg-accent-hover"
-                : "flex-1"
-            }`}
+      {/* ── Dock ──
+          The whole strip is buttons, edge to edge, 2px ink rule above, no
+          shadow. Top row: this view's actions, sharing the width (pink = the
+          one next step). Bottom row: the three tabs, current one inverted.
+          Whichever row is last runs down into the phone's home-indicator area. */}
+      <div className="fixed bottom-0 inset-x-0 border-t-2 border-border bg-bg">
+        {actions && <div className="flex">{actions}</div>}
+
+        {showTabs && (
+          <div
+            role="tablist"
+            aria-label="Views"
+            className={`grid grid-cols-3 ${actions ? "border-t border-border" : ""}`}
+            onKeyDown={onTabKey}
           >
-            {photos.length === 0 ? "Add photos" : "Another photo"}
-            <input
-              type="file"
-              accept="image/*"
-              multiple
-              className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
-              onChange={(e) => {
-                if (e.target.files) addFiles(e.target.files);
-                e.target.value = ""; // so the same photo can be picked again
-              }}
-            />
-          </label>
-          {photos.length > 0 && (
-            <button
-              onClick={findRecipes}
-              disabled={isScanning || isFetching || ingredients.length === 0}
-              className="btn btn-accent border-text flex-1 disabled:opacity-100 disabled:bg-bg disabled:text-text disabled:border-border disabled:font-normal"
-            >
-              {findLabel}
-            </button>
-          )}
-        </div>
+            {VIEWS.map(({ id, label }, i) => {
+              const selected = view === id;
+              return (
+                <button
+                  key={id}
+                  id={`tab-${id}`}
+                  ref={(el) => { tabRefs.current[id] = el; }}
+                  role="tab"
+                  aria-selected={selected}
+                  aria-controls="view-panel"
+                  tabIndex={selected ? 0 : -1}
+                  onClick={() => goTo(id)}
+                  style={safeBottom(3)}
+                  className={`min-h-8 px-1 flex items-center justify-center gap-1 text-sm cursor-pointer focus-visible:outline-4 focus-visible:-outline-offset-4 ${
+                    i > 0 ? "border-l border-border" : ""
+                  } ${
+                    // Pink focus ring on the plain tabs (4.78:1 light, 8.80:1 dark). On the
+                    // inverted tab pink drops under 3:1, so its ring is the page color.
+                    selected
+                      ? "bg-text text-bg font-bold focus-visible:outline-bg"
+                      : "bg-bg text-text focus-visible:outline-accent active:bg-text active:text-bg"
+                  }`}
+                >
+                  {label}
+                  {counts[id] > 0 && <span className="font-mono text-xs font-normal">{counts[id]}</span>}
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
       {/* built with Claude and Claude + Spoonacular */}
 

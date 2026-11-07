@@ -31,7 +31,6 @@
   --color-accent-hover: var(--color-accent-hover);
   --color-danger: var(--color-danger);
   --color-well: var(--color-well);
-  --color-dock: var(--color-dock);
 
   --font-sans: var(--font-sans);
   --font-display: var(--font-display);
@@ -63,15 +62,10 @@
    kit's system sans.
 
    --color-well: the empty photo tile and loading placeholders. Never carries
-   text, so no contrast floor; it only has to read as "something goes here".
-
-   --color-dock: the bottom action strip, the oblique gray, same in both modes.
-   Pink on it is 1.34:1 (light) and 1.63:1 (dark), so the button carries an
-   ink border: 3.86:1 light, 3.49:1 dark. */
+   text, so no contrast floor; it only has to read as "something goes here". */
 :root {
   --font-display: var(--font-newsreader), Georgia, serif;
   --color-well: var(--white-3);
-  --color-dock: var(--wjerk-med-gray);
 }
 @media (prefers-color-scheme: dark) {
   :root:where(:not([data-theme="light"])) {

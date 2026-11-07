@@ -6,23 +6,32 @@ Last updated 2026-11-06.
 
 ## Check next time
 
-- **Run one real scan on a phone.** Nothing below has been seen with real
-  results yet:
-  - "Ready to make" / "Need a few things" groups and the recipe cards
-  - "+ List" toggles and the shopping list (Copy, and Share where the
-    browser has it)
-  - photo shrinking: full-size iPhone photos should now go through on the
-    live site
-  - Haiku 5.5 ingredient lists. A text-only test passed; check that photo
-    results are as good as Haiku 4.5's were.
-  - The photo-by-photo flow: each tile should go "Scanning…" → "+N found",
-    and a second photo of the same shelf should mostly say "Nothing new"
-    (Claude is sent the running list and told to reuse its names).
-  - Duplicates: "Eggs" and "egg" should never both appear.
+- **Try the three-view layout on a phone** (Fridge · Recipes · List tabs in
+  the bottom dock, photos folded into one row). Only tested in a desktop
+  browser at phone size, with fake scan results.
 - On the local-network dev address (http, not https), Share doesn't show up
   and Copy uses a fallback. Test those on the live site.
 
 ## To do
+
+Direction (2026-11-06): build it for the household (Kristian and his wife),
+not for everyone. Next steps, in order:
+
+1. **Save and share between both phones.** One household record (fridge
+   list, hidden/liked recipes, shopping list, household notes) on a small
+   key-value store, unlocked with a shared passphrase. No accounts. Photos
+   stay on the phone that took them.
+2. **"Not for us"** on each recipe card, so hidden recipes stay hidden after
+   new searches. Ask Spoonacular for ~20 results so enough remain.
+3. **Meal-type chips** (Dinner · Brunch · Sweet · Under 30 min): switch to
+   Spoonacular's complexSearch, which takes `type` and `maxReadyTime`.
+4. **Household page + kid tags**: who eats, what the kids won't touch; Haiku
+   sorts or tags recipes against it.
+
+Assumptions in the app to revisit: the fridge is re-scanned every time
+(it could be a running list instead); quantities don't matter; nothing is
+about to go bad; Spoonacular is the only recipe source; the shopping list
+lives in the app rather than a list you already share.
 
 - **Design** — sketch before deciding what's next. Ideas still open:
   a hard offset outline or a slight tilt on the recipe cards (both are
@@ -31,9 +40,9 @@ Last updated 2026-11-06.
 ## Housekeeping
 
 - **Design-kit repo** (`~/Code/color-system-and-guidelines`): today's
-  Wjaffle entries in NOTES.md are uncommitted, alongside earlier uncommitted
-  edits there. Open question in it: should "pink on a mid-gray ground gets a
-  dark outline" become a rule in RULES.md?
+  Wjaffle entries in NOTES.md and the focus-ring line in RULES.md are
+  uncommitted, alongside earlier uncommitted edits there. (The "pink on a
+  mid-gray ground" question no longer applies here: the gray dock is gone.)
 - **Names.** The folder and package are still `fridgechef`; the GitHub repo
   and Vercel project are still `mise` (mise-ivory.vercel.app). Renaming the
   GitHub repo means updating the git remote.
