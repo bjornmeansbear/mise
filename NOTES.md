@@ -41,6 +41,16 @@ not for everyone. Next steps, in order:
 4. **Household page + kid tags**: who eats, what the kids won't touch; Haiku
    sorts or tags recipes against it.
 
+4b. **Own recipe index (idea, 2026-11-07).** A bare ingredient list and
+   basic steps aren't copyrightable; the author's prose, photos and layout
+   are. So Wjaffle could remember "good" recipes (household taps a star)
+   and keep its own index: title, ingredients, short steps in our words,
+   and the `sourceUrl` link back. Search the local index first, Spoonacular
+   second. Before building: read Spoonacular's terms on storing their data
+   (their API may limit caching); safest is to save only what the
+   household picks, and rewrite the steps. Needs Redis (already planned
+   for sharing) to hold it.
+
 Assumptions in the app to revisit: the fridge is re-scanned every time
 (it could be a running list instead); quantities don't matter; nothing is
 about to go bad; Spoonacular is the only recipe source; the shopping list
